@@ -39,7 +39,7 @@
 
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
 
@@ -81,6 +81,7 @@
         }
         .custom-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
 
+        /* 咖啡杯呼吸渐变效果 */
         @keyframes coffee-pulse {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -103,7 +104,7 @@
             display: flex; align-items: center; justify-content: center;
             padding: 8px; border-radius: 12px; transition: all 0.2s; color: #94a3b8;
         }
-        .btn-status-icon:hover { background-color: #f1f5f9; color: #1e293b; }
+        .btn-status-icon:hover { background-color: #e5e7eb; color: #1e293b; }
         .btn-status-icon.active { background-color: #1e293b; color: #ffffff; }
     </style>
 </head>
@@ -194,95 +195,63 @@
                 }
             };
 
-            // 导出史诗级详尽的全局 UI 规范 JSON (The Genesis Code)
+            // 导出极致详尽的绝对扁平化 UI 规范 JSON (The Genesis Code)
             const handleDownloadUIRules = () => {
                 const uiRules = {
-                    name: "GBG-UI-Universal-Rules-Genesis",
-                    version: "8.0",
-                    description: "【最高优先级】GBG 宇宙全局架构与代码实现标准。指导所有前端/AI完全一比一克隆该软件的视觉UI、文案超链接、甚至底层隐藏交互的 React 逻辑。不可遗漏任何细节。",
-                    developerMenuImplementation: {
-                        warning: "【极度重要】任何生成此软件的 AI，必须在代码中完整植入以下的 React 逻辑与 DOM 结构，确保开发者菜单真实可用，而不是仅仅画一个死按钮。",
-                        requiredReactHooks: [
-                            "const [showUIMenu, setShowUIMenu] = useState(false);",
-                            "const avatarClickCount = useRef(0);",
-                            "const avatarClickTimer = useRef(null);",
-                            "const uiRuleInputRef = useRef(null);"
-                        ],
-                        requiredFunctions: {
-                            handleAvatarClick: "const handleAvatarClick = () => { avatarClickCount.current += 1; if (avatarClickCount.current === 3) { setShowUIMenu(prev => !prev); avatarClickCount.current = 0; clearTimeout(avatarClickTimer.current); } else { clearTimeout(avatarClickTimer.current); avatarClickTimer.current = setTimeout(() => { avatarClickCount.current = 0; }, 600); } };",
-                            handleUploadUIRules: "必须为 uiRuleInputRef 绑定 onChange 事件，使用 FileReader 解析 JSON 文件。",
-                            handleDownloadUIRules: "必须实现生成 Blob，然后 URL.createObjectURL，挂载到临时 <a> 标签触发下载的逻辑。"
-                        },
-                        requiredDOM: {
-                            hiddenFileInput: "<input type='file' ref={uiRuleInputRef} onChange={handleUploadUIRules} accept='.json' className='hidden' />",
-                            avatarTrigger: "<img onClick={handleAvatarClick} ... />",
-                            menuDropdown: "在头像的父容器使用 relative，菜单本身使用 absolute top-[52px] left-0，且背景需带有一层 fixed inset-0 z-40 的透明蒙版用于点击外部关闭。"
-                        }
+                    name: "GBG-UI-Genesis-Rules",
+                    version: "9.0",
+                    description: "GBG 视觉宇宙最高纲领。规定了所有 HTML 应用必须遵循的骨架、文案、交互逻辑与特效标准。",
+                    coreDesignPrinciples: {
+                        style: "绝对扁平化 (Absolute Flat Design)",
+                        zeroBorders: "【硬性要求】全局禁止使用任何可见描边 (No borders allowed)。依靠背景色块色差区分层级。",
+                        zeroShadows: "【硬性要求】全局禁止使用任何阴影投影 (No shadows allowed)。保证极致轻量化感官。",
+                        roundedCorners: "统一圆润感。最外层容器: 28px; 功能卡片: 24px/20px; 按钮: 全圆角胶囊 (rounded-full)。",
+                        zeroScrollbar: "强制内容在一屏内显示完毕。隐藏滚动条或使用极简 4px 样式。"
                     },
-                    layoutArchitecture: {
-                        window: "100dvh, flex-col, overflow-hidden, 背景色 bg-gray-100",
-                        grid: "顶部 Header 栏 + 底部 Main 三段式 (Left Sidebar: 320px, Center Canvas: flex-1, Right Sidebar: 320px)。区域间 gap 为 16px (gap-4)。完全零滚轮 (Zero-scrollbar)。"
-                    },
-                    standardizedComponents: {
-                        header: {
-                            layout: "全宽大圆角胶囊形态",
-                            style: "bg-white py-3 px-6 rounded-full flex items-center justify-between border border-gray-100 shadow-sm shrink-0",
-                            leftSection: {
-                                avatar: "src: 'others/xieyoujune.jpg', fallback: DefaultAvatar, size: w-11 h-11 (44x44px), object-fit: cover, rounded-full, 带有 hover:scale-105 transition-transform 动画。",
-                                userInfo: {
-                                    name: "@谢有君 (text-xl, font-black, leading-none, text-gray-900)",
-                                    links: [
-                                        { text: "独立音乐人", url: "https://music.163.com/#/artist?id=1184020" },
-                                        { text: "《人生之旅》游戏开发者", url: "https://www.xiaohongshu.com/user/profile/63cac1130000000026006f9a" }
-                                    ],
-                                    linksStyle: "text-[10px], font-bold, uppercase, tracking-widest, text-gray-400, hover:text-gray-600。包含 target='_blank' rel='noopener noreferrer' 属性。"
-                                },
-                                divider: "w-px h-8 bg-gray-200 mx-2"
+                    headerStructure: {
+                        layout: "bg-white, rounded-full, px-6, py-3",
+                        leftSection: {
+                            avatar: {
+                                src: "others/xieyoujune.jpg",
+                                size: "44x44px (w-11 h-11)",
+                                interaction: "连点3次触发开发者菜单的逻辑必须在 React 中手动实装。"
                             },
-                            rightSection_Buttons: {
-                                structure: "三大核心操作按键，纯圆角胶囊形态 (rounded-full)",
-                                uploadBtn: { text: "上传", style: "px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-black uppercase tracking-widest rounded-full transition-all" },
-                                exportBtn: { text: "导出", style: "px-6 py-2.5 bg-[#b0b3b8] hover:bg-gray-500 text-white text-sm font-black uppercase tracking-widest rounded-full transition-all active:scale-95" },
-                                coffeeBtn: {
-                                    icon: "Coffee Cup (Stroke 2.5)",
-                                    style: "px-4 py-2.5 bg-gray-100 text-gray-800 rounded-full btn-coffee-lab shadow-sm",
-                                    hoverAnimation: "必须实现 CSS 动画: linear-gradient(-45deg, #1677ff, #07c160, #1677ff, #07c160)，背景放大400%，8秒一周期无限律动 (coffee-pulse)"
-                                }
-                            }
-                        },
-                        donationModal: {
-                            trigger: "点击咖啡杯按钮时弹出",
-                            backdrop: "fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm",
-                            content: {
-                                title: "请我喝杯咖啡 ☕️",
-                                subtitle: "感谢支持独立开发",
-                                qrCodes: [
-                                    { platform: "微信支付", imagePath: "others/wechatpay.jpg", textColor: "#07c160" },
-                                    { platform: "支付宝", imagePath: "others/alipay.jpg", textColor: "#1677ff" }
+                            userInfo: {
+                                name: "@谢有君",
+                                sublinks: [
+                                    { text: "独立音乐人", url: "https://music.163.com/#/artist?id=1184020" },
+                                    { text: "《人生之旅》游戏开发者", url: "https://www.xiaohongshu.com/user/profile/63cac1130000000026006f9a" }
                                 ]
                             }
                         },
-                        sidebarsAndCards: {
-                            outerContainer: "bg-white p-4 rounded-[28px] border border-gray-100 flex flex-col gap-3 shadow-sm",
-                            innerCard: "bg-gray-50 p-5 rounded-[24px] or rounded-[20px] border border-gray-100",
-                            sliders: "轨道 4px，滑块头 14x14px 且必须是完美的圆形 (rounded-full)",
-                            typography: {
-                                labels: "text-[10px]或[11px], font-black, text-gray-400, uppercase, tracking-widest",
-                                values: "font-mono, font-black, text-gray-900"
+                        rightButtons: {
+                            upload: { bg: "bg-gray-100", text: "上传", textStyle: "text-gray-800, font-black, uppercase" },
+                            export: { bg: "bg-[#b0b3b8]", text: "导出", textStyle: "text-white, font-black, uppercase" },
+                            coffee: {
+                                bg: "bg-gray-100",
+                                pulseAnimation: "8秒周期律动, 渐变色 #1677ff -> #07c160 -> #1677ff"
                             }
                         }
+                    },
+                    donationSystem: {
+                        assets: {
+                            wechat: "others/wechatpay.jpg",
+                            alipay: "others/alipay.jpg"
+                        }
+                    },
+                    secretTriggers: {
+                        logic: "Click count logic (3 clicks in 600ms) is mandatory for uniform software interaction."
                     }
                 };
                 const blob = new Blob([JSON.stringify(uiRules, null, 2)], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `GBG_UI_Genesis_Rules_${Date.now()}.json`;
+                a.download = `GBG_Genesis_UI_Rules_${Date.now()}.json`;
                 a.click();
                 URL.revokeObjectURL(url);
                 setShowUIMenu(false);
-                
-                showToast("✅ GBG 核心宇宙基因 (JSON) 已成功导出！");
+                showToast("✅ GBG 核心规范 JSON 已导出");
             };
 
             const handleUploadUIRules = (e) => {
@@ -293,9 +262,9 @@
                     try {
                         const rules = JSON.parse(event.target.result);
                         if (rules.name && rules.name.includes("GBG-UI")) {
-                            showToast("✅ 核心规则导入成功");
+                            showToast("✅ 核心规范导入并解析成功");
                         } else {
-                            showToast("❌ 无法识别的 UI 规则文件格式");
+                            showToast("❌ 无法识别的规范文件");
                         }
                     } catch (err) {
                         showToast("❌ 文件解析失败");
@@ -345,7 +314,6 @@
                     video.crossOrigin = "anonymous";
                     const cleanup = () => { URL.revokeObjectURL(video.src); setIsExtracting(false); };
                     video.onerror = () => { cleanup(); resolve([]); };
-                    
                     video.onloadedmetadata = async () => {
                         try {
                             const canvas = document.createElement('canvas');
@@ -369,11 +337,7 @@
                                 const url = canvas.toDataURL('image/png');
                                 const img = new Image();
                                 await new Promise(r => { img.onload = r; img.src = url; });
-                                frames.push({ 
-                                    id: Math.random().toString(36).substr(2, 9), 
-                                    url, img, width: img.width, height: img.height, 
-                                    name: `v_frame_${(i+1).toString().padStart(3,'0')}.png` 
-                                });
+                                frames.push({ id: Math.random().toString(36).substr(2, 9), url, img, width: img.width, height: img.height, name: `v_frame_${(i+1).toString().padStart(3,'0')}.png` });
                             }
                             cleanup(); resolve(frames);
                         } catch (err) { cleanup(); resolve([]); }
@@ -427,9 +391,7 @@
             const drawCore = (ctx, w, h, isSheet) => {
                 if (images.length === 0) return;
                 ctx.clearRect(0, 0, w, h); ctx.save();
-                
                 ctx.filter = `saturate(${settings.saturation}%) hue-rotate(${settings.hue}deg)`;
-
                 if (isMirrored) { ctx.translate(w, 0); ctx.scale(-1, 1); }
                 if (isSheet) {
                     const validImages = images.filter(i => i && i.img);
@@ -447,7 +409,6 @@
                     if (target && target.img) ctx.drawImage(target.img, 0, 0);
                 }
                 ctx.restore();
-
                 if (transparentColor && !isPickingColor) {
                     const idata = ctx.getImageData(0, 0, w, h);
                     const d = idata.data; const {r,g,b} = transparentColor; const tol = settings.tolerance;
@@ -464,7 +425,6 @@
                 const canvas = canvasRef.current;
                 const validImages = images.filter(i => i && i.img);
                 if (validImages.length === 0) return;
-
                 if (previewMode === 'sheet') {
                     const mw = Math.max(...validImages.map(i => i.width));
                     const mh = Math.max(...validImages.map(i => i.height));
@@ -472,19 +432,12 @@
                     const rows = Math.ceil(validImages.length / cols);
                     const pad = settings.padding;
                     const w = cols * mw + (cols - 1) * pad;
-                    const h = Math.ceil(validImages.length / cols) * mh + (Math.ceil(validImages.length / cols) - 1) * pad;
-                    
-                    if (canvas.width !== w || canvas.height !== h) {
-                        canvas.width = w; canvas.height = h;
-                        setCanvasSize({ width: w, height: h });
-                    }
+                    const h = rows * mh + (rows - 1) * pad;
+                    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; setCanvasSize({ width: w, height: h }); }
                     drawCore(canvas.getContext('2d'), w, h, true);
                 } else {
                     const f = images[currentFrame] || images[0]; if (!f) return;
-                    if (canvas.width !== f.width || canvas.height !== f.height) {
-                        canvas.width = f.width; canvas.height = f.height;
-                        setCanvasSize({ width: f.width, height: f.height });
-                    }
+                    if (canvas.width !== f.width || canvas.height !== f.height) { canvas.width = f.width; canvas.height = f.height; setCanvasSize({ width: f.width, height: f.height }); }
                     drawCore(canvas.getContext('2d'), f.width, f.height, false);
                 }
             }, [images, settings, transparentColor, isPickingColor, previewMode, currentFrame, isMirrored]);
@@ -512,21 +465,11 @@
                 const a = document.createElement('a'); a.download=`sprite_${Date.now()}.png`; a.href=tmp.toDataURL('image/png'); a.click();
             };
 
-            const moveImage = (idx, dir) => {
-                const newI = [...images];
-                if (dir === 'up' && idx > 0) [newI[idx - 1], newI[idx]] = [newI[idx], newI[idx - 1]];
-                if (dir === 'down' && idx < images.length - 1) [newI[idx + 1], newI[idx]] = [newI[idx], newI[idx + 1]];
-                setImages(newI);
-            };
-
             const removeImage = (id) => {
                 setImages(prev => {
                     const newImages = prev.filter(img => img.id !== id);
-                    if (currentFrame >= newImages.length && newImages.length > 0) {
-                        setCurrentFrame(newImages.length - 1);
-                    } else if (newImages.length === 0) {
-                        setCurrentFrame(0);
-                    }
+                    if (currentFrame >= newImages.length && newImages.length > 0) setCurrentFrame(newImages.length - 1);
+                    else if (newImages.length === 0) setCurrentFrame(0);
                     return newImages;
                 });
             };
@@ -534,17 +477,13 @@
             const clearAll = () => { setImages([]); setTransparentColor(null); setVideoFile(null); setCurrentFrame(0); };
 
             const handleToleranceChange = (v) => {
-                if (!transparentColor) {
-                    setShouldShakePickBtn(true);
-                    setTimeout(() => setShouldShakePickBtn(false), 500);
-                    return;
-                }
+                if (!transparentColor) { setShouldShakePickBtn(true); setTimeout(() => setShouldShakePickBtn(false), 500); return; }
                 setSettings({...settings, tolerance: v});
             };
 
             const Slider = ({ label, value, min, max, onChange, suffix = '' }) => (
                 <div className="flex flex-col gap-1.5">
-                    <div className="flex justify-between text-[11px] font-black text-gray-500 uppercase tracking-widest text-left">
+                    <div className="flex justify-between text-[11px] font-black text-gray-400 uppercase tracking-widest text-left">
                         <span>{label}</span>
                         <span className="text-gray-900 font-mono">{value===0 && !suffix ? 'AUTO' : `${value}${suffix}`}</span>
                     </div>
@@ -558,27 +497,26 @@
                     <input type="file" ref={videoInputRef} onChange={handleVideo} accept="video/*" className="hidden" />
                     <input type="file" ref={uiRuleInputRef} onChange={handleUploadUIRules} accept=".json" className="hidden" />
 
-                    {/* 全局 Toast 提示 */}
+                    {/* 全局 Toast 提示 - 完全无阴影 */}
                     {toastMessage && (
-                        <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[200] bg-gray-900 text-white px-6 py-3.5 rounded-full shadow-xl animate-pop-in flex items-center gap-3">
+                        <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[200] bg-gray-900 text-white px-8 py-4 rounded-full animate-pop-in flex items-center gap-3">
                             <span className="text-[12px] font-black tracking-widest">{toastMessage}</span>
                         </div>
                     )}
 
-                    {/* 捐赠模态框 */}
                     {showDonationModal && (
                         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={()=>setShowDonationModal(false)}>
-                            <div className="bg-white p-10 max-w-2xl w-full relative flex flex-col items-center animate-pop-in shadow-2xl border border-gray-100 rounded-[32px]" onClick={e=>e.stopPropagation()}>
+                            <div className="bg-white p-10 max-w-2xl w-full relative flex flex-col items-center animate-pop-in rounded-[32px]" onClick={e=>e.stopPropagation()}>
                                 <button onClick={()=>setShowDonationModal(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 p-2 transition-all"><Icons.Close size={24}/></button>
-                                <h2 className="text-2xl font-black mb-2 mt-4 tracking-tight">请我喝杯咖啡 ☕️</h2>
+                                <h2 className="text-2xl font-black mb-2 mt-4 tracking-tight text-gray-900 text-center">请我喝杯咖啡 ☕️</h2>
                                 <p className="text-sm font-bold text-gray-400 mb-10 tracking-widest uppercase text-center">感谢支持独立开发</p>
                                 <div className="flex gap-8 w-full justify-center text-center">
-                                    <div className="flex flex-col items-center bg-gray-50 border border-gray-100 rounded-3xl p-5 w-[240px]">
-                                        <div className="w-full aspect-square bg-white border border-gray-100 rounded-2xl overflow-hidden mb-4"><img src="others/wechatpay.jpg" className="w-full h-full object-cover" alt="wechat" /></div>
+                                    <div className="flex flex-col items-center bg-gray-50 p-6 rounded-[24px] w-[240px]">
+                                        <div className="w-full aspect-square bg-white rounded-[20px] overflow-hidden mb-4 flex items-center justify-center"><img src="others/wechatpay.jpg" className="max-w-full max-h-full object-cover" alt="wechat" /></div>
                                         <span className="text-sm font-black text-[#07c160] tracking-widest uppercase">微信支付</span>
                                     </div>
-                                    <div className="flex flex-col items-center bg-gray-50 border border-gray-100 rounded-3xl p-5 w-[240px]">
-                                        <div className="w-full aspect-square bg-white border border-gray-100 rounded-2xl overflow-hidden mb-4"><img src="others/alipay.jpg" className="w-full h-full object-cover" alt="alipay" /></div>
+                                    <div className="flex flex-col items-center bg-gray-50 p-6 rounded-[24px] w-[240px]">
+                                        <div className="w-full aspect-square bg-white rounded-[20px] overflow-hidden mb-4 flex items-center justify-center"><img src="others/alipay.jpg" className="max-w-full max-h-full object-cover" alt="alipay" /></div>
                                         <span className="text-sm font-black text-[#1677ff] tracking-widest uppercase">支付宝</span>
                                     </div>
                                 </div>
@@ -587,28 +525,17 @@
                     )}
 
                     <div className="w-[95vw] max-w-[1400px] flex flex-col gap-4 h-full max-h-[900px] animate-pop-in">
-                        {/* 顶栏 Header: 完美复刻长胶囊结构 */}
-                        <header className="bg-white py-3 px-6 rounded-full flex items-center justify-between z-20 shadow-sm shrink-0 border border-gray-100">
+                        {/* 顶栏 Header: 绝对无描边和阴影 */}
+                        <header className="bg-white py-3 px-6 rounded-full flex items-center justify-between z-20 shrink-0">
                             <div className="flex items-center gap-5 text-left">
-                                {/* 点击头像呼出 UI 规则菜单 - 连点三次触发 */}
                                 <div className="relative">
-                                    <img 
-                                        src="others/xieyoujune.jpg" 
-                                        alt="Avatar" 
-                                        className="w-11 h-11 object-cover rounded-full shadow-sm cursor-pointer hover:scale-105 transition-transform" 
-                                        onError={e=>e.target.src=DefaultAvatar} 
-                                        onClick={handleAvatarClick}
-                                    />
+                                    <img src="others/xieyoujune.jpg" alt="Avatar" className="w-11 h-11 object-cover rounded-full cursor-pointer hover:scale-105 transition-transform" onError={e=>e.target.src=DefaultAvatar} onClick={handleAvatarClick} />
                                     {showUIMenu && (
                                         <>
                                             <div className="fixed inset-0 z-40" onClick={() => setShowUIMenu(false)}></div>
-                                            <div className="absolute top-[52px] left-0 w-[170px] bg-white border border-gray-100 shadow-xl p-2 z-50 animate-pop-in flex flex-col gap-1 rounded-[20px]">
-                                                <button onClick={() => uiRuleInputRef.current?.click()} className="flex items-center gap-3 px-4 py-3 text-[11px] font-black text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-[12px] transition-all w-full text-left uppercase tracking-widest">
-                                                    <Icons.Upload size={14} /> 导入规则
-                                                </button>
-                                                <button onClick={handleDownloadUIRules} className="flex items-center gap-3 px-4 py-3 text-[11px] font-black text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-[12px] transition-all w-full text-left uppercase tracking-widest">
-                                                    <Icons.Download size={14} /> 导出规则
-                                                </button>
+                                            <div className="absolute top-[56px] left-0 w-[170px] bg-gray-100 p-2 z-50 animate-pop-in flex flex-col gap-1 rounded-[24px]">
+                                                <button onClick={() => uiRuleInputRef.current?.click()} className="flex items-center gap-3 px-4 py-3 text-[11px] font-black text-gray-500 hover:text-gray-900 hover:bg-white rounded-[18px] transition-all w-full text-left uppercase tracking-widest"><Icons.Upload size={14} /> 导入规则</button>
+                                                <button onClick={handleDownloadUIRules} className="flex items-center gap-3 px-4 py-3 text-[11px] font-black text-gray-500 hover:text-gray-900 hover:bg-white rounded-[18px] transition-all w-full text-left uppercase tracking-widest"><Icons.Download size={14} /> 导出规则</button>
                                             </div>
                                         </>
                                     )}
@@ -616,158 +543,101 @@
                                 <div className="flex flex-col text-left">
                                     <span className="text-xl font-black tracking-tight leading-none text-gray-900">@谢有君</span>
                                     <div className="flex items-center gap-2 mt-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 leading-none">
-                                        <a href="https://music.163.com/#/artist?id=1184020" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600 cursor-pointer transition-colors">独立音乐人</a>
-                                        <span className="text-gray-300">/</span>
-                                        <a href="https://www.xiaohongshu.com/user/profile/63cac1130000000026006f9a" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600 cursor-pointer transition-colors">《人生之旅》游戏开发者</a>
+                                        <a href="https://music.163.com/#/artist?id=1184020" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600 transition-colors">独立音乐人</a>
+                                        <span className="text-gray-200">/</span>
+                                        <a href="https://www.xiaohongshu.com/user/profile/63cac1130000000026006f9a" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600 transition-colors">《人生之旅》游戏开发者</a>
                                     </div>
                                 </div>
-                                <div className="h-8 w-px bg-gray-200 mx-2" />
+                                <div className="h-8 w-px bg-gray-100 mx-2" />
                                 <div className="flex flex-col text-left">
-                                    <h1 className="text-xl font-black tracking-tight text-gray-900 leading-none">GBG 精灵图实验室</h1>
+                                    <h1 className="text-xl font-black tracking-tight text-gray-900 leading-none uppercase">GBG 精灵图实验室</h1>
                                     <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mt-1.5 leading-none">Sprite Sheet Maker</p>
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <button onClick={()=>fileInputRef.current.click()} className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-black uppercase tracking-widest rounded-full transition-all">上传</button>
-                                <button onClick={download} disabled={images.length===0} className="px-6 py-2.5 bg-[#b0b3b8] hover:bg-gray-500 text-white text-sm font-black uppercase tracking-widest rounded-full transition-all active:scale-95 disabled:opacity-30">导出</button>
-                                <button onClick={()=>setShowDonationModal(true)} className="px-4 py-2.5 bg-gray-100 text-gray-800 rounded-full btn-coffee-lab transition-all shadow-sm"><Icons.Coffee /></button>
+                                <button onClick={()=>fileInputRef.current.click()} className="px-7 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-black uppercase tracking-widest rounded-full transition-all">上传</button>
+                                <button onClick={download} disabled={images.length===0} className="px-7 py-2.5 bg-[#b0b3b8] hover:bg-gray-500 text-white text-sm font-black uppercase tracking-widest rounded-full transition-all active:scale-95 disabled:opacity-30">导出</button>
+                                <button onClick={()=>setShowDonationModal(true)} className="px-4 py-2.5 bg-gray-100 text-gray-800 rounded-full btn-coffee-lab transition-all"><Icons.Coffee /></button>
                             </div>
                         </header>
 
                         <main className="flex gap-4 flex-1 min-h-0">
-                            {/* 左侧控制栏 */}
-                            <aside className="w-[320px] bg-white p-4 rounded-[28px] flex flex-col gap-3 overflow-hidden shadow-sm shrink-0 border border-gray-100">
-                                
-                                {/* 1. 视图切换 */}
-                                <div className="flex bg-gray-50 p-1.5 rounded-[20px] shrink-0 border border-gray-100">
-                                    <button onClick={()=>setPreviewMode('anim')} className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-[16px] transition-all ${previewMode==='anim'?'bg-white text-gray-900 shadow-sm border border-gray-200':'text-gray-400 hover:text-gray-600'}`}>动画 / Anim</button>
-                                    <button onClick={()=>setPreviewMode('sheet')} className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-[16px] transition-all ${previewMode==='sheet'?'bg-white text-gray-900 shadow-sm border border-gray-200':'text-gray-400 hover:text-gray-600'}`}>雪碧图 / Sheet</button>
+                            <aside className="w-[320px] bg-white p-4 rounded-[28px] flex flex-col gap-3 overflow-hidden shrink-0">
+                                <div className="flex bg-gray-50 p-1.5 rounded-full shrink-0">
+                                    <button onClick={()=>setPreviewMode('anim')} className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-full transition-all ${previewMode==='anim'?'bg-white text-gray-900 shadow-sm':'text-gray-400 hover:text-gray-600'}`}>动画 / Anim</button>
+                                    <button onClick={()=>setPreviewMode('sheet')} className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-full transition-all ${previewMode==='sheet'?'bg-white text-gray-900 shadow-sm':'text-gray-400 hover:text-gray-600'}`}>雪碧图 / Sheet</button>
                                 </div>
-                                
-                                {/* 2. 上传图片 */}
-                                <div className={`bg-gray-50 p-6 rounded-[20px] flex flex-col items-center justify-center cursor-pointer transition-all shrink-0 border ${isDragging?'border-gray-800 bg-gray-100 scale-[1.02]':'border-gray-100 hover:border-gray-300'}`} onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop} onClick={()=>fileInputRef.current.click()}>
-                                    <Icons.Upload size={22} className="text-gray-800" />
-                                    <p className="text-[12px] font-black mt-3 text-gray-800 tracking-wide">点击或拖拽图片</p>
+                                <div className={`bg-gray-50 p-6 rounded-[24px] flex flex-col items-center justify-center cursor-pointer transition-all shrink-0 ${isDragging?'bg-gray-200 scale-[1.02]':'hover:bg-gray-100'}`} onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop} onClick={()=>fileInputRef.current.click()}>
+                                    <Icons.Upload size={22} className="text-gray-700" /><p className="text-[12px] font-black mt-3 text-gray-700 tracking-wide text-center uppercase">上传或拖拽图片</p>
                                 </div>
-                                
-                                {/* 3. 导入视频 */}
-                                <button onClick={()=>videoInputRef.current?.click()} className="bg-gray-50 hover:bg-gray-100 py-3.5 rounded-[20px] flex items-center justify-center gap-2 text-[12px] font-black uppercase tracking-widest transition-all text-gray-600 shrink-0 border border-gray-100">
-                                    <Icons.Video size={18} /> 导入视频 / Video
-                                </button>
-                                
-                                {/* 4. 参数设置面板 */}
-                                <div className="flex-1 bg-gray-50 p-4 rounded-[24px] overflow-y-auto no-scrollbar flex flex-col text-left gap-4 border border-gray-100">
-                                    
-                                    {/* 4.1 滑块组 */}
-                                    <div className="flex flex-col gap-3">
+                                <button onClick={()=>videoInputRef.current?.click()} className="bg-gray-50 hover:bg-gray-100 py-4 rounded-[24px] flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest transition-all text-gray-600 shrink-0"><Icons.Video size={18} /> 导入视频 / Video</button>
+                                <div className="flex-1 bg-gray-50 p-5 rounded-[24px] overflow-y-auto no-scrollbar flex flex-col text-left gap-5">
+                                    <div className="flex flex-col gap-4">
                                         <Slider label="排版列数 / Columns" value={settings.columns} min={0} max={Math.max(10,images.length)} onChange={v=>setSettings({...settings, columns:v})} />
                                         <Slider label="切片间距 / Padding" value={settings.padding} min={0} max={50} onChange={v=>setSettings({...settings, padding:v})} suffix="PX" />
                                         <Slider label="播放速度 / FPS" value={settings.fps} min={1} max={60} onChange={v=>setSettings({...settings, fps:v})} suffix="FPS" />
                                         <Slider label="饱和度 / Saturation" value={settings.saturation} min={0} max={200} onChange={v=>setSettings({...settings, saturation:v})} suffix="%" />
                                         <Slider label="色相 / Hue" value={settings.hue} min={0} max={360} onChange={v=>setSettings({...settings, hue:v})} suffix="°" />
                                     </div>
-                                    
-                                    {/* 4.2 视频提取快捷选项 */}
                                     {videoFile && (
-                                        <div className="flex flex-col gap-1 pt-1 shrink-0">
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-left">视频提取 / Extraction</p>
-                                            <div className="flex bg-gray-200/50 p-1 rounded-[16px] gap-1">
+                                        <div className="flex flex-col gap-2 pt-2 shrink-0 border-t border-gray-200/50">
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">视频提取 / Extraction</p>
+                                            <div className="flex bg-gray-200/50 p-1 rounded-full gap-1">
                                                 {[1,5,10].map(v=>(
-                                                    <button key={v} onClick={()=>handleDurationChange(v)} disabled={isExtracting} className={`flex-1 py-1 text-[10px] font-black rounded-[12px] transition-all border ${videoDurationSetting===v?'bg-white text-gray-900 border-gray-300 shadow-sm':'border-transparent text-gray-500 hover:bg-gray-100'}`}>{v}S</button>
+                                                    <button key={v} onClick={()=>handleDurationChange(v)} disabled={isExtracting} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all ${videoDurationSetting===v?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>{v}S</button>
                                                 ))}
                                             </div>
                                         </div>
                                     )}
-
-                                    <div className="w-full h-px bg-gray-200/80 my-1 shrink-0"></div>
-
-                                    {/* 4.3 抠图功能 */}
-                                    <div className="flex flex-col gap-2 shrink-0 text-left">
-                                        <div className="flex justify-between items-center">
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">透明抠图 / Transparency</p>
-                                            {transparentColor && (
-                                                <button onClick={()=>setTransparentColor(null)} className="text-[10px] font-black text-red-500 uppercase hover:underline leading-none">清除 / Clear</button>
-                                            )}
-                                        </div>
-                                        <button 
-                                            onClick={()=>setIsPickingColor(!isPickingColor)} 
-                                            className={`w-full py-2 text-[11px] font-black uppercase tracking-widest rounded-[16px] transition-all flex items-center justify-center gap-2 border ${shouldShakePickBtn ? 'animate-shake text-red-500 bg-red-50 border-red-200' : (isPickingColor?'bg-gray-900 text-white border-gray-900 shadow-md':'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200')}`}
-                                        >
-                                            <Icons.Pipette size={14}/>
-                                            {isPickingColor ? '请在中间画板取色' : '吸取背景色'}
-                                        </button>
-                                        
-                                        {transparentColor && (
-                                            <div className="animate-pop-in mt-1">
-                                                <Slider label="容差 / Tolerance" value={settings.tolerance} min={0} max={150} onChange={handleToleranceChange} />
-                                            </div>
-                                        )}
+                                    <div className="pt-2 flex flex-col gap-3 border-t border-gray-200/50 text-left shrink-0">
+                                        <div className="flex justify-between items-center"><p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">透明抠图 / Transparency</p>{transparentColor && <button onClick={()=>setTransparentColor(null)} className="text-[10px] font-black text-red-500 uppercase hover:underline">清除</button>}</div>
+                                        <button onClick={()=>setIsPickingColor(!isPickingColor)} className={`w-full py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${shouldShakePickBtn?'animate-shake bg-red-100 text-red-600':(isPickingColor?'bg-gray-900 text-white shadow-xl':'bg-gray-200/60 text-gray-700 hover:bg-gray-200')}`}><Icons.Pipette size={16}/>{isPickingColor?'请取色':'吸取背景色'}</button>
+                                        <Slider label="调节容差 / Tolerance" value={settings.tolerance} min={0} max={150} onChange={handleToleranceChange} />
                                     </div>
                                 </div>
                             </aside>
 
-                            {/* 中间显示窗口 */}
-                            <div className="flex-1 bg-white rounded-[28px] relative flex flex-col overflow-hidden shadow-sm border border-gray-100">
-                                <div className="h-12 flex items-center px-6 shrink-0 bg-white border-b border-gray-100">
+                            <div className="flex-1 bg-white rounded-[28px] relative flex flex-col overflow-hidden">
+                                <div className="h-12 flex items-center px-6 shrink-0 bg-white">
                                     <div className="flex items-center gap-3 text-left">
                                         <div className={`w-1.5 h-1.5 rounded-full ${images.length===0?'bg-gray-200':(isPickingColor?'bg-yellow-400 animate-pulse':'bg-red-500 animate-fast-blink')}`} />
                                         <span className="text-[11px] text-gray-400 font-black uppercase tracking-[0.2em] leading-none mt-0.5">显示输出 / Live Output</span>
                                     </div>
                                 </div>
                                 <div className="flex-1 checkered-bg overflow-auto p-8 flex items-center justify-center relative">
-                                    {isExtracting && <div className="absolute inset-0 bg-white/70 backdrop-blur-md flex flex-col items-center justify-center z-50 animate-pop-in"><div className="w-8 h-8 border-4 border-gray-200 border-t-gray-900 rounded-full animate-spin mb-4" /><p className="text-[11px] font-black tracking-widest text-gray-900 uppercase animate-pulse">正在提取...</p></div>}
+                                    {isExtracting && <div className="absolute inset-0 bg-white/70 backdrop-blur-md flex flex-col items-center justify-center z-50"><div className="w-8 h-8 border-4 border-gray-100 border-t-gray-900 rounded-full animate-spin mb-4" /><p className="text-[11px] font-black tracking-widest text-gray-900 uppercase animate-pulse">正在提取...</p></div>}
                                     {images.length===0 ? (
-                                        <div onClick={()=>fileInputRef.current.click()} className="cursor-pointer group flex flex-col items-center">
-                                            <p className="text-2xl font-black text-gray-300 group-hover:text-gray-400 transition-colors tracking-tight text-center leading-none">工作区为空 / Empty</p>
-                                            <p className="text-[11px] font-black text-gray-400 uppercase tracking-[0.1em] mt-3 text-center">请在左侧导入文件</p>
-                                        </div>
+                                        <div onClick={()=>fileInputRef.current.click()} className="cursor-pointer group flex flex-col items-center opacity-40 hover:opacity-100 transition-opacity"><p className="text-3xl font-black text-gray-200 tracking-tight text-center leading-none uppercase">Empty</p></div>
                                     ) : (
-                                        <canvas ref={canvasRef} onClick={handleCanvasClick} className={`max-w-full max-h-full object-contain transition-all duration-300 ${isPickingColor?'picker-cursor scale-[1.02] rounded-md border border-gray-900':''}`} />
+                                        <canvas ref={canvasRef} onClick={handleCanvasClick} className={`max-w-full max-h-full object-contain transition-all duration-300 ${isPickingColor?'picker-cursor scale-[1.02]':''}`} />
                                     )}
                                 </div>
-                                <footer className="h-16 relative flex items-center justify-between px-6 bg-white opacity-90 shrink-0 border-t border-gray-100">
-                                    <div className="flex flex-col text-left"><span className="text-[9px] font-black uppercase text-gray-400 tracking-widest">系统状态 / Status</span><span className="text-[11px] font-black tracking-wider text-gray-800 leading-none mt-1">SIGNAL: NOMINAL</span></div>
-                                    
-                                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 bg-gray-50 px-4 py-1.5 rounded-[20px] border border-gray-200 pointer-events-auto">
-                                        <button className={`btn-status-icon ${isPlaying ? 'active' : ''}`} onClick={() => setIsPlaying(true)} title="播放"><Icons.Play size={16} /></button>
-                                        <button className={`btn-status-icon ${!isPlaying ? 'active' : ''}`} onClick={() => setIsPlaying(false)} title="暂停"><Icons.Pause size={16} /></button>
+                                <footer className="h-16 relative flex items-center justify-between px-6 bg-white opacity-90 shrink-0">
+                                    <div className="flex flex-col text-left"><span className="text-[9px] font-black uppercase text-gray-400 tracking-widest">系统状态 / Status</span><span className="text-[11px] font-black tracking-wider text-gray-600 leading-none mt-1 uppercase">Signal: Nominal</span></div>
+                                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 bg-gray-50 px-4 py-1.5 rounded-full pointer-events-auto">
+                                        <button className={`btn-status-icon ${isPlaying ? 'active' : ''}`} onClick={() => setIsPlaying(true)} title="播放"><Icons.Play size={18} /></button>
+                                        <button className={`btn-status-icon ${!isPlaying ? 'active' : ''}`} onClick={() => setIsPlaying(false)} title="暂停"><Icons.Pause size={18} /></button>
                                         <div className="w-px h-5 bg-gray-200 mx-2" />
                                         <button className={`btn-status-icon ${isMirrored ? 'active' : ''}`} onClick={() => setIsMirrored(!isMirrored)} title="镜像翻转"><Icons.Mirror size={20} /></button>
                                     </div>
-
-                                    <div className="text-right flex flex-col text-right"><span className="text-[9px] font-black uppercase text-gray-400 tracking-widest">{previewMode==='anim'?'当前帧数 / Anim Info':'画布规格 / Canvas Info'}</span><span className="text-[11px] font-mono font-black uppercase text-gray-800 leading-none mt-1">{previewMode==='anim' ? `F:${currentFrame+1}/${images.length}` : `W:${canvasSize.width} H:${canvasSize.height}`}</span></div>
+                                    <div className="text-right flex flex-col text-right"><span className="text-[9px] font-black uppercase text-gray-400 tracking-widest">信息 / Info</span><span className="text-[11px] font-mono font-black uppercase text-gray-600 leading-none mt-1">{previewMode==='anim' ? `F:${currentFrame+1}/${images.length}` : `W:${canvasSize.width} H:${canvasSize.height}`}</span></div>
                                 </footer>
                             </div>
 
-                            {/* 右侧序列 */}
-                            <aside className="w-[320px] bg-white p-4 rounded-[28px] flex flex-col overflow-hidden shadow-sm shrink-0 border border-gray-100">
-                                <div className="bg-gray-50 border border-gray-100 rounded-[24px] p-5 flex-1 flex flex-col overflow-hidden text-left">
+                            <aside className="w-[320px] bg-white p-4 rounded-[28px] flex flex-col overflow-hidden shrink-0">
+                                <div className="bg-gray-50 rounded-[24px] p-5 flex-1 flex flex-col overflow-hidden text-left">
                                     <div className="flex justify-between items-center mb-5 text-left">
                                         <p className="text-[13px] font-black text-gray-400 uppercase tracking-widest leading-none">帧序列 / Sequence ({images.length})</p>
-                                        {images.length>0 && <button onClick={clearAll} className="text-[13px] font-black text-red-500 hover:text-red-600 transition-colors">清空</button>}
+                                        {images.length>0 && <button onClick={clearAll} className="text-[13px] font-black text-red-500 hover:text-red-700 transition-colors uppercase">清空</button>}
                                     </div>
                                     <div className="flex-1 overflow-y-auto custom-scrollbar -mx-2 px-2 space-y-3 text-left">
-                                        {images.length===0 ? <div className="text-center text-gray-300 text-[12px] font-black uppercase mt-12 py-8 border-2 border-dashed border-gray-200 rounded-[20px]">EMPTY LIST</div> : images.map((img, idx)=>(
-                                            <div key={img.id} className={`flex items-center gap-3 p-3 bg-white rounded-[20px] border transition-all duration-200 ${currentFrame===idx&&previewMode==='anim'?'border-gray-900 shadow-sm':'border-gray-100 hover:border-gray-200'}`}>
-                                                <div className="w-14 h-14 bg-gray-100 rounded-[16px] flex items-center justify-center overflow-hidden shrink-0 border border-gray-50">
-                                                    <img src={img.url} className="max-w-full max-h-full object-contain" alt="thumb" />
-                                                </div>
-                                                <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                                    <p className="text-[13px] font-black text-gray-900 truncate leading-tight mb-1" title={img.name}>{img.name}</p>
-                                                    <p className="text-[11px] font-black text-gray-400 font-mono uppercase leading-tight">{img.width}x{img.height}</p>
-                                                </div>
+                                        {images.length===0 ? <div className="text-center text-gray-300 text-[12px] font-black uppercase mt-12 py-8 rounded-[24px] bg-gray-100/50">EMPTY LIST</div> : images.map((img, idx)=>(
+                                            <div key={img.id} className={`flex items-center gap-3 p-3 rounded-[20px] transition-all duration-200 ${currentFrame===idx&&previewMode==='anim'?'bg-gray-200':'bg-white hover:bg-gray-100'}`}>
+                                                <div className="w-14 h-14 bg-gray-100 rounded-[16px] flex items-center justify-center overflow-hidden shrink-0"><img src={img.url} className="max-w-full max-h-full object-contain" alt="thumb" /></div>
+                                                <div className="flex-1 min-w-0 flex flex-col justify-center"><p className="text-[13px] font-black text-gray-900 truncate leading-tight mb-1" title={img.name}>{img.name}</p><p className="text-[11px] font-black text-gray-400 font-mono uppercase leading-tight">{img.width}x{img.height}</p></div>
                                                 <div className="flex items-center gap-2 shrink-0">
-                                                    <div className="flex flex-col gap-1">
-                                                        <button onClick={()=>moveImage(idx,'up')} disabled={idx===0} className="text-gray-300 hover:text-gray-900 disabled:opacity-20 transition-colors">
-                                                            <Icons.ChevronUp size={14} />
-                                                        </button>
-                                                        <button onClick={()=>moveImage(idx,'down')} disabled={idx===images.length-1} className="text-gray-300 hover:text-gray-900 disabled:opacity-20 transition-colors">
-                                                            <Icons.ChevronDown size={14} />
-                                                        </button>
-                                                    </div>
-                                                    <button onClick={()=>removeImage(img.id)} className="w-10 h-10 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 rounded-[12px] transition-all ml-1 border border-red-100">
-                                                        <Icons.Trash size={16} />
-                                                    </button>
+                                                    <div className="flex flex-col gap-1"><button onClick={()=>moveImage(idx,'up')} disabled={idx===0} className="text-gray-300 hover:text-gray-900 disabled:opacity-20 transition-colors"><Icons.ChevronUp size={14} /></button><button onClick={()=>moveImage(idx,'down')} disabled={idx===images.length-1} className="text-gray-300 hover:text-gray-900 disabled:opacity-20 transition-colors"><Icons.ChevronDown size={14} /></button></div>
+                                                    <button onClick={()=>removeImage(img.id)} className="w-10 h-10 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 rounded-[12px] transition-all ml-1"><Icons.Trash size={16} /></button>
                                                 </div>
                                             </div>
                                         ))}
