@@ -16,6 +16,9 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
+    <!-- 引入 gif.js 用于纯前端导出透明无损 GIF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+    
     <style>
         body { 
             background-color: #f3f4f6; 
@@ -26,6 +29,7 @@
             user-select: none;
         }
         
+        /* 亮色棋盘格背景 */
         .checkered-bg {
             background-image: 
                 linear-gradient(45deg, #e5e7eb 25%, transparent 25%), 
@@ -55,7 +59,6 @@
         }
         .animate-fast-blink { animation: fastBlink 0.5s ease-in-out infinite; }
 
-        /* 提醒抖动动画 */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             20%, 60% { transform: translateX(-5px); }
@@ -63,7 +66,6 @@
         }
         .animate-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
 
-        /* 圆滑滑块设计 */
         .custom-slider {
             -webkit-appearance: none;
             appearance: none;
@@ -81,7 +83,6 @@
         }
         .custom-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
 
-        /* 咖啡杯呼吸渐变效果 */
         @keyframes coffee-pulse {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -117,22 +118,17 @@
         const Icons = {
             Upload: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>,
             Video: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>,
+            Grid: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>,
             Download: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
             Trash: ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>,
             ChevronUp: ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>,
             ChevronDown: ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
             Pipette: ({ size = 18 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m2 22 1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/></svg>,
-            Clear: ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>,
             Coffee: ({ size = 18 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="13" y1="1" x2="13" y2="4"/></svg>,
             Close: ({ size = 24 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
             Play: ({ size = 18 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>,
             Pause: ({ size = 18 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>,
-            Mirror: ({ size = 20 }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M10 20L3 12L10 4V20Z" />
-                    <path d="M14 20L21 12L14 4V20Z" />
-                </svg>
-            )
+            Mirror: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 20L3 12L10 4V20Z" /><path d="M14 20L21 12L14 4V20Z" /></svg>
         };
 
         const DefaultAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23111827'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%23f3f4f6'/%3E%3Cpath d='M20 90 Q50 60 80 90' stroke='%23f3f4f6' stroke-width='10' fill='none'/%3E%3C/svg%3E";
@@ -143,30 +139,34 @@
             const [isDragging, setIsDragging] = useState(false);
             const [currentFrame, setCurrentFrame] = useState(0);
             const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
-            
             const [previewMode, setPreviewMode] = useState('anim'); 
             const [transparentColor, setTransparentColor] = useState(null);
             const [isPickingColor, setIsPickingColor] = useState(false);
-            
-            // UI Rules Menu State & Hidden Trigger
             const [showUIMenu, setShowUIMenu] = useState(false);
             const [toastMessage, setToastMessage] = useState(null);
             const avatarClickCount = useRef(0);
             const avatarClickTimer = useRef(null);
-            
             const [showDonationModal, setShowDonationModal] = useState(false);
             const [isPlaying, setIsPlaying] = useState(true);
             const [isMirrored, setIsMirrored] = useState(false);
             const [shouldShakePickBtn, setShouldShakePickBtn] = useState(false);
-
             const [videoFile, setVideoFile] = useState(null);
-            const [videoDurationSetting, setVideoDurationSetting] = useState(5); 
             const [isExtracting, setIsExtracting] = useState(false);
+            const [videoDurationSetting, setVideoDurationSetting] = useState(5); 
+            const [importSource, setImportSource] = useState('image'); // 'image', 'video', 'spritesheet'
+            
+            const [originalSpriteSheet, setOriginalSpriteSheet] = useState(null);
 
             const canvasRef = useRef(null);
             const fileInputRef = useRef(null);
             const videoInputRef = useRef(null);
+            const spriteSheetInputRef = useRef(null);
             const uiRuleInputRef = useRef(null);
+
+            const showToast = useCallback((msg) => {
+                setToastMessage(msg);
+                setTimeout(() => setToastMessage(null), 3000);
+            }, []);
 
             useEffect(() => {
                 const handleKeyDown = (e) => {
@@ -180,7 +180,7 @@
                 return () => window.removeEventListener('keydown', handleKeyDown);
             }, []);
 
-            // 隐藏彩蛋：0.6秒内连续点击三次头像触发开发者菜单
+            // 隐藏彩蛋：0.6秒内连点三次头像触发开发者菜单
             const handleAvatarClick = () => {
                 avatarClickCount.current += 1;
                 if (avatarClickCount.current === 3) {
@@ -195,61 +195,35 @@
                 }
             };
 
-            // 导出极致详尽的绝对扁平化 UI 规范 JSON (The Genesis Code)
             const handleDownloadUIRules = () => {
                 const uiRules = {
-                    name: "GBG-UI-Genesis-Rules",
-                    version: "9.0",
-                    description: "GBG 视觉宇宙最高纲领。规定了所有 HTML 应用必须遵循的骨架、文案、交互逻辑与特效标准。",
-                    coreDesignPrinciples: {
-                        style: "绝对扁平化 (Absolute Flat Design)",
-                        zeroBorders: "【硬性要求】全局禁止使用任何可见描边 (No borders allowed)。依靠背景色块色差区分层级。",
-                        zeroShadows: "【硬性要求】全局禁止使用任何阴影投影 (No shadows allowed)。保证极致轻量化感官。",
-                        roundedCorners: "统一圆润感。最外层容器: 28px; 功能卡片: 24px/20px; 按钮: 全圆角胶囊 (rounded-full)。",
-                        zeroScrollbar: "强制内容在一屏内显示完毕。隐藏滚动条或使用极简 4px 样式。"
+                    name: "GBG-UI-Genesis-Rules-Pro-Final",
+                    version: "19.0",
+                    description: "GBG 视觉宇宙最高规范。规定了绝对扁平化、无阴影、大圆角、雪碧图导出纯净透明无损 GIF 的核心逻辑，以及开发者菜单隐藏交互的实现。",
+                    designPhilosophy: {
+                        style: "Absolute Flat Design (No borders, No shadows). 严禁使用任何 Tailwind 的 shadow 和 border 属性类。",
+                        visualLayers: "依靠纯净的背景色差区分功能区 (bg-white, bg-gray-50, bg-gray-100)。",
+                        cornerSystem: "Outer Containers: 28px, Inner Cards: 24px/20px, All Buttons & Navs: rounded-full",
+                        scrollbar: "Zero vertical scroll on main layout. 紧凑排版，一屏展示完。"
                     },
-                    headerStructure: {
-                        layout: "bg-white, rounded-full, px-6, py-3",
-                        leftSection: {
-                            avatar: {
-                                src: "others/xieyoujune.jpg",
-                                size: "44x44px (w-11 h-11)",
-                                interaction: "连点3次触发开发者菜单的逻辑必须在 React 中手动实装。"
-                            },
-                            userInfo: {
-                                name: "@谢有君",
-                                sublinks: [
-                                    { text: "独立音乐人", url: "https://music.163.com/#/artist?id=1184020" },
-                                    { text: "《人生之旅》游戏开发者", url: "https://www.xiaohongshu.com/user/profile/63cac1130000000026006f9a" }
-                                ]
-                            }
-                        },
-                        rightButtons: {
-                            upload: { bg: "bg-gray-100", text: "上传", textStyle: "text-gray-800, font-black, uppercase" },
-                            export: { bg: "bg-[#b0b3b8]", text: "导出", textStyle: "text-white, font-black, uppercase" },
-                            coffee: {
-                                bg: "bg-gray-100",
-                                pulseAnimation: "8秒周期律动, 渐变色 #1677ff -> #07c160 -> #1677ff"
-                            }
+                    headerSpecs: {
+                        avatar: { src: "others/xieyoujune.jpg", size: "44x44px", shape: "rounded-full", interaction: "连点3次触发开发者菜单" },
+                        links: [
+                            { text: "独立音乐人", url: "https://music.163.com/#/artist?id=1184020" },
+                            { text: "《人生之旅》游戏开发者", url: "https://www.xiaohongshu.com/user/profile/63cac1130000000026006f9a" }
+                        ],
+                        coffeeAnimation: {
+                            style: "linear-gradient(-45deg, #1677ff, #07c160, #1677ff, #07c160)",
+                            duration: "8s infinite pulse"
                         }
                     },
-                    donationSystem: {
-                        assets: {
-                            wechat: "others/wechatpay.jpg",
-                            alipay: "others/alipay.jpg"
-                        }
-                    },
-                    secretTriggers: {
-                        logic: "Click count logic (3 clicks in 600ms) is mandatory for uniform software interaction."
+                    functionalLogic: {
+                        exportLogic: "【硬性规定】无论导入何种格式，凡是导入[雪碧图]工作流，必须且只能使用 gif.js 导出 [纯净透明、单帧原尺寸、不压缩质量] 的 GIF。不可导出视频。渲染方法：使用 quality:10 实现极速渲染，transparent: 0x00FF00 数字形式定义透明抠像。为了防毛边边缘发黑，需将低于 Alpha 128 的像素强制置为透明绿 #00ff00，其余全不透明。"
                     }
                 };
                 const blob = new Blob([JSON.stringify(uiRules, null, 2)], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `GBG_Genesis_UI_Rules_${Date.now()}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
+                const a = document.createElement('a'); a.href = url; a.download = `GBG_Genesis_Rules.json`; a.click();
                 setShowUIMenu(false);
                 showToast("✅ GBG 核心规范 JSON 已导出");
             };
@@ -261,40 +235,25 @@
                 reader.onload = (event) => {
                     try {
                         const rules = JSON.parse(event.target.result);
-                        if (rules.name && rules.name.includes("GBG-UI")) {
-                            showToast("✅ 核心规范导入并解析成功");
-                        } else {
-                            showToast("❌ 无法识别的规范文件");
-                        }
-                    } catch (err) {
-                        showToast("❌ 文件解析失败");
-                    }
+                        if (rules.name && rules.name.includes("GBG-UI")) showToast("✅ 规范文件已识别并导入成功");
+                        else showToast("❌ 非标规范文件");
+                    } catch (err) { showToast("❌ JSON 解析失败"); }
                 };
                 reader.readAsText(file);
                 setShowUIMenu(false);
                 if (uiRuleInputRef.current) uiRuleInputRef.current.value = '';
             };
 
-            const showToast = (msg) => {
-                setToastMessage(msg);
-                setTimeout(() => setToastMessage(null), 3000);
-            };
-
             const handleFiles = async (files) => {
                 const validFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
                 if (validFiles.length === 0) return;
-                setVideoFile(null);
-                setCurrentFrame(0);
+                setImportSource('image'); setVideoFile(null); setOriginalSpriteSheet(null); setCurrentFrame(0);
                 const newImages = await Promise.all(validFiles.map(file => {
                     return new Promise(resolve => {
                         const reader = new FileReader();
                         reader.onload = (e) => {
                             const img = new Image();
-                            img.onload = () => resolve({
-                                id: Math.random().toString(36).substr(2, 9),
-                                file, url: e.target.result, img,
-                                width: img.width, height: img.height, name: file.name
-                            });
+                            img.onload = () => resolve({ id: Math.random().toString(36).substr(2, 9), url: e.target.result, img, width: img.width, height: img.height, name: file.name });
                             img.src = e.target.result;
                         };
                         reader.readAsDataURL(file);
@@ -304,61 +263,149 @@
                 setImages(newImages);
             };
 
-            const extractFrames = async (file, dur) => {
-                setIsExtracting(true);
-                setCurrentFrame(0);
-                return new Promise((resolve) => {
-                    const video = document.createElement('video');
-                    video.src = URL.createObjectURL(file);
-                    video.muted = true; video.playsInline = true; video.preload = "auto";
-                    video.crossOrigin = "anonymous";
-                    const cleanup = () => { URL.revokeObjectURL(video.src); setIsExtracting(false); };
-                    video.onerror = () => { cleanup(); resolve([]); };
-                    video.onloadedmetadata = async () => {
-                        try {
-                            const canvas = document.createElement('canvas');
-                            canvas.width = video.videoWidth || 1; 
-                            canvas.height = video.videoHeight || 1;
-                            const ctx = canvas.getContext('2d');
-                            const frames = [];
-                            const frameCount = dur === 1 ? 5 : (dur === 10 ? 48 : 24);
-                            const videoDur = isNaN(video.duration) || video.duration === Infinity ? dur : video.duration;
-                            const targetTime = Math.min(videoDur, dur);
-                            const step = targetTime / frameCount;
-
-                            for (let i = 0; i < frameCount; i++) {
-                                video.currentTime = Math.min(i * step, videoDur);
-                                await new Promise((res) => {
-                                    const onS = () => { video.removeEventListener('seeked', onS); res(); };
-                                    video.addEventListener('seeked', onS);
-                                    setTimeout(onS, 1000); 
-                                });
-                                ctx.drawImage(video, 0, 0);
-                                const url = canvas.toDataURL('image/png');
-                                const img = new Image();
-                                await new Promise(r => { img.onload = r; img.src = url; });
-                                frames.push({ id: Math.random().toString(36).substr(2, 9), url, img, width: img.width, height: img.height, name: `v_frame_${(i+1).toString().padStart(3,'0')}.png` });
-                            }
-                            cleanup(); resolve(frames);
-                        } catch (err) { cleanup(); resolve([]); }
-                    };
-                    video.load();
-                });
-            };
-
             const handleVideo = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                setVideoFile(file); setTransparentColor(null);
-                const frames = await extractFrames(file, videoDurationSetting);
-                if (frames && frames.length > 0) setImages(frames);
+                const file = e.target.files[0]; if (!file) return;
+                setImportSource('video'); setVideoFile(file); setOriginalSpriteSheet(null);
+                setIsExtracting(true); setCurrentFrame(0);
+                const video = document.createElement('video');
+                video.src = URL.createObjectURL(file); video.muted = true; video.preload = "auto";
+                video.onloadedmetadata = async () => {
+                    try {
+                        const canvas = document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+                        const ctx = canvas.getContext('2d'); const frames = [];
+                        const frameCount = videoDurationSetting === 1 ? 5 : (videoDurationSetting === 10 ? 48 : 24);
+                        const step = Math.min(video.duration, videoDurationSetting) / frameCount;
+                        for (let i = 0; i < frameCount; i++) {
+                            video.currentTime = i * step;
+                            await new Promise(res => { video.onseeked = res; setTimeout(res, 1000); });
+                            ctx.drawImage(video, 0, 0);
+                            const img = new Image(); await new Promise(r => { img.onload = r; img.src = canvas.toDataURL('image/png'); });
+                            frames.push({ id: Math.random().toString(36).substr(2, 9), url: img.src, img, width: img.width, height: img.height, name: `v_frame_${i}.png` });
+                        }
+                        URL.revokeObjectURL(video.src); setIsExtracting(false); setImages(frames);
+                    } catch (err) { setIsExtracting(false); }
+                };
             };
 
-            const handleDurationChange = async (val) => {
-                if (isExtracting || !videoFile) return;
-                setVideoDurationSetting(val);
-                const frames = await extractFrames(videoFile, val);
-                if (frames && frames.length > 0) setImages(frames);
+            // 智能切割核心引擎：投影检测法 + 去底联动
+            const sliceSpriteSheet = useCallback((img, colsSetting, tColor, tol) => {
+                setIsExtracting(true);
+                setTimeout(() => {
+                    const canvas = document.createElement('canvas');
+                    const w = Math.round(img.width); const h = Math.round(img.height);
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+
+                    // 如果指定了透明色，预先干掉背景
+                    const imgData = ctx.getImageData(0, 0, w, h);
+                    const data = imgData.data;
+                    if (tColor) {
+                        const {r, g, b} = tColor;
+                        for (let i=0; i<data.length; i+=4) {
+                            if (Math.abs(data[i]-r)<=tol && Math.abs(data[i+1]-g)<=tol && Math.abs(data[i+2]-b)<=tol) {
+                                data[i+3] = 0; // 彻底透明化
+                            }
+                        }
+                        ctx.putImageData(imgData, 0, 0);
+                    }
+
+                    const isSolid = (x, y) => data[(y * w + x) * 4 + 3] > 0;
+
+                    let cols = colsSetting;
+                    let rows = 1;
+
+                    // AUTO 模式智能检测间隙
+                    if (cols === 0) { 
+                        let emptyCols = [];
+                        for (let x = 0; x < w; x++) {
+                            let empty = true;
+                            for (let y = 0; y < h; y++) { if (isSolid(x, y)) { empty = false; break; } }
+                            if (empty) emptyCols.push(x);
+                        }
+                        let emptyRows = [];
+                        for (let y = 0; y < h; y++) {
+                            let empty = true;
+                            for (let x = 0; x < w; x++) { if (isSolid(x, y)) { empty = false; break; } }
+                            if (empty) emptyRows.push(y);
+                        }
+
+                        const getSegments = (emptyArr, maxVal) => {
+                            const segments = []; let start = 0;
+                            for(let i=0; i<emptyArr.length; i++) {
+                                if(emptyArr[i] > start) segments.push({start: start, end: emptyArr[i]});
+                                start = emptyArr[i] + 1;
+                            }
+                            if(maxVal > start) segments.push({start: start, end: maxVal});
+                            return segments.filter(s => s.end - s.start > 2);
+                        };
+
+                        const xSegments = getSegments(emptyCols, w);
+                        const ySegments = getSegments(emptyRows, h);
+
+                        if (xSegments.length > 0 && ySegments.length > 0) {
+                            cols = xSegments.length;
+                            rows = ySegments.length;
+                            showToast(`✨ 智能切割完成: ${cols} 列 x ${rows} 行`);
+                        } else {
+                            cols = 4; 
+                            rows = Math.max(1, Math.round(h / (w / cols)));
+                            if (!tColor) showToast("⚠️ 未检测到透明间隙，已均分切割。请吸取并去除背景底色重试");
+                        }
+                    } else {
+                        rows = Math.max(1, Math.round(h / (w / cols)));
+                    }
+
+                    // 切片生成为独立 PNG 对象
+                    const frameW = w / cols;
+                    const frameH = h / rows;
+                    const frames = [];
+                    
+                    for(let y=0; y<rows; y++) {
+                        for(let x=0; x<cols; x++) {
+                            const startX = Math.round(x * frameW);
+                            const startY = Math.round(y * frameH);
+                            const drawW = Math.max(1, Math.round(frameW));
+                            const drawH = Math.max(1, Math.round(frameH));
+                            
+                            const fCanvas = document.createElement('canvas');
+                            fCanvas.width = drawW; fCanvas.height = drawH;
+                            const fCtx = fCanvas.getContext('2d');
+                            fCtx.putImageData(ctx.getImageData(startX, startY, drawW, drawH), 0, 0);
+                            
+                            const fImg = new Image();
+                            fImg.src = fCanvas.toDataURL();
+                            frames.push({
+                                id: Math.random().toString(36).substr(2,9),
+                                url: fImg.src, img: fImg, width: drawW, height: drawH,
+                                name: `s_frame_${y}_${x}.png`
+                            });
+                        }
+                    }
+                    setImages(frames);
+                    setCurrentFrame(0);
+                    setIsExtracting(false);
+                }, 50);
+            }, [showToast]);
+
+            useEffect(() => {
+                if (importSource === 'spritesheet' && originalSpriteSheet) {
+                    sliceSpriteSheet(originalSpriteSheet, settings.columns, transparentColor, settings.tolerance);
+                }
+            }, [originalSpriteSheet, settings.columns, transparentColor, settings.tolerance, importSource, sliceSpriteSheet]);
+
+            const handleSpriteSheet = async (e) => {
+                const file = e.target.files[0]; if (!file) return;
+                setImportSource('spritesheet'); setVideoFile(null); setCurrentFrame(0);
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        setOriginalSpriteSheet(img); 
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
             };
 
             const onDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
@@ -368,8 +415,8 @@
                 if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
                     const file = e.dataTransfer.files[0];
                     if (file.type.startsWith('video/')) {
-                        setVideoFile(file); setTransparentColor(null);
-                        extractFrames(file, videoDurationSetting).then(res => res && res.length && setImages(res));
+                        setImportSource('video'); setVideoFile(file); setOriginalSpriteSheet(null);
+                        handleVideo({ target: { files: [file] } });
                     } else handleFiles(e.dataTransfer.files);
                 }
             };
@@ -390,57 +437,51 @@
 
             const drawCore = (ctx, w, h, isSheet) => {
                 if (images.length === 0) return;
-                ctx.clearRect(0, 0, w, h); ctx.save();
+                ctx.clearRect(0, 0, w, h);
+                ctx.save();
                 ctx.filter = `saturate(${settings.saturation}%) hue-rotate(${settings.hue}deg)`;
                 if (isMirrored) { ctx.translate(w, 0); ctx.scale(-1, 1); }
                 if (isSheet) {
-                    const validImages = images.filter(i => i && i.img);
-                    if (validImages.length === 0) return;
-                    const mw = Math.max(...validImages.map(i => i.width));
-                    const mh = Math.max(...validImages.map(i => i.height));
-                    let cols = settings.columns > 0 ? settings.columns : Math.ceil(Math.sqrt(validImages.length));
-                    const pad = settings.padding;
-                    validImages.forEach((imgObj, idx) => {
+                    const valid = images.filter(i => i && i.img);
+                    if (valid.length === 0) return;
+                    const mw = Math.max(...valid.map(i => i.width)); const mh = Math.max(...valid.map(i => i.height));
+                    let cols = settings.columns > 0 ? settings.columns : Math.ceil(Math.sqrt(valid.length));
+                    if (cols === 0) cols = 4;
+                    valid.forEach((imgObj, idx) => {
                         const col = idx % cols; const row = Math.floor(idx / cols);
-                        ctx.drawImage(imgObj.img, col*(mw+pad) + (mw-imgObj.width)/2, row*(mh+pad) + (mh-imgObj.height)/2);
+                        ctx.drawImage(imgObj.img, col*(mw+settings.padding) + (mw-imgObj.width)/2, row*(mh+settings.padding) + (mh-imgObj.height)/2);
                     });
                 } else {
                     const target = images[currentFrame] || images[0];
                     if (target && target.img) ctx.drawImage(target.img, 0, 0);
                 }
                 ctx.restore();
-                if (transparentColor && !isPickingColor) {
-                    const idata = ctx.getImageData(0, 0, w, h);
-                    const d = idata.data; const {r,g,b} = transparentColor; const tol = settings.tolerance;
+                
+                // 非雪碧图渲染时处理透明逻辑
+                if (transparentColor && !isPickingColor && importSource !== 'spritesheet') {
+                    const idata = ctx.getImageData(0, 0, w, h); const d = idata.data; const {r,g,b} = transparentColor; const tol = settings.tolerance;
                     for (let i=0; i<d.length; i+=4) if (Math.abs(d[i]-r)<=tol && Math.abs(d[i+1]-g)<=tol && Math.abs(d[i+2]-b)<=tol) d[i+3]=0;
                     ctx.putImageData(idata, 0, 0);
                 }
             };
 
             const updateCanvas = useCallback(() => {
-                if (!canvasRef.current || images.length === 0) { 
-                    if (canvasSize.width !== 0) setCanvasSize({ width: 0, height: 0 }); 
-                    return; 
-                }
+                if (!canvasRef.current || images.length === 0) { setCanvasSize({ width: 0, height: 0 }); return; }
                 const canvas = canvasRef.current;
-                const validImages = images.filter(i => i && i.img);
-                if (validImages.length === 0) return;
                 if (previewMode === 'sheet') {
-                    const mw = Math.max(...validImages.map(i => i.width));
-                    const mh = Math.max(...validImages.map(i => i.height));
-                    let cols = settings.columns > 0 ? settings.columns : Math.ceil(Math.sqrt(validImages.length));
-                    const rows = Math.ceil(validImages.length / cols);
-                    const pad = settings.padding;
-                    const w = cols * mw + (cols - 1) * pad;
-                    const h = rows * mh + (rows - 1) * pad;
-                    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; setCanvasSize({ width: w, height: h }); }
+                    const mw = Math.max(...images.map(i => i.width)); const mh = Math.max(...images.map(i => i.height));
+                    let cols = settings.columns > 0 ? settings.columns : Math.ceil(Math.sqrt(images.length));
+                    if (cols === 0) cols = 4;
+                    const w = cols * mw + (cols - 1) * settings.padding;
+                    const h = Math.ceil(images.length / cols) * mh + (Math.ceil(images.length / cols) - 1) * settings.padding;
+                    canvas.width = w; canvas.height = h; setCanvasSize({ width: w, height: h });
                     drawCore(canvas.getContext('2d'), w, h, true);
                 } else {
                     const f = images[currentFrame] || images[0]; if (!f) return;
-                    if (canvas.width !== f.width || canvas.height !== f.height) { canvas.width = f.width; canvas.height = f.height; setCanvasSize({ width: f.width, height: f.height }); }
+                    canvas.width = f.width; canvas.height = f.height; setCanvasSize({ width: f.width, height: f.height });
                     drawCore(canvas.getContext('2d'), f.width, f.height, false);
                 }
-            }, [images, settings, transparentColor, isPickingColor, previewMode, currentFrame, isMirrored]);
+            }, [images, settings, transparentColor, isPickingColor, previewMode, currentFrame, isMirrored, importSource]);
 
             useEffect(() => { updateCanvas(); }, [updateCanvas]);
 
@@ -450,40 +491,137 @@
                 return () => clearInterval(itv);
             }, [images.length, settings.fps, isPlaying]);
 
-            const download = () => {
+            // 完美的导出双轨：导入雪碧图出极速无损透明GIF；否则出大尺寸PNG雪碧图
+            const handleExport = () => {
                 if (images.length === 0) return;
-                const tmp = document.createElement('canvas');
-                const validImages = images.filter(i => i && i.img);
-                const mw = Math.max(...validImages.map(i => i.width));
-                const mh = Math.max(...validImages.map(i => i.height));
-                let cols = settings.columns > 0 ? settings.columns : Math.ceil(Math.sqrt(validImages.length));
-                const pad = settings.padding;
-                const w = cols * mw + (cols - 1) * pad;
-                const h = Math.ceil(validImages.length / cols) * (mh + pad);
-                tmp.width = w; tmp.height = h;
-                drawCore(tmp.getContext('2d'), w, h, true);
-                const a = document.createElement('a'); a.download=`sprite_${Date.now()}.png`; a.href=tmp.toDataURL('image/png'); a.click();
+                
+                const isExportingGif = importSource === 'spritesheet';
+
+                if (isExportingGif) {
+                    if (!window.GIF) { showToast("❌ GIF 引擎未就绪，请刷新重试"); return; }
+                    setIsExtracting(true);
+                    showToast("⏳ 极速渲染无损透明 GIF...");
+
+                    const validImages = images.filter(i => i && i.img);
+                    
+                    // 【致命修复】: 保证传给 getImageData 和 gif.js 的宽高为绝对的整型！
+                    const exportW = Math.max(1, Math.round(validImages[0].width));
+                    const exportH = Math.max(1, Math.round(validImages[0].height));
+
+                    const workerBlob = new Blob([`importScripts('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js');`], { type: 'application/javascript' });
+                    const workerUrl = URL.createObjectURL(workerBlob);
+
+                    const gif = new window.GIF({
+                        workers: 4, // 多线程极速渲染
+                        quality: 10, // 画质10渲染速度飞快，对于像素/动画已足够无损
+                        width: exportW,
+                        height: exportH,
+                        workerScript: workerUrl,
+                        transparent: 0x00FF00 // 指定极限绿幕为透明色 (必须是Hex Number)
+                    });
+
+                    const c = document.createElement('canvas');
+                    c.width = exportW;
+                    c.height = exportH;
+                    const ctx = c.getContext('2d', { willReadFrequently: true });
+
+                    validImages.forEach((imgObj) => {
+                        ctx.clearRect(0, 0, exportW, exportH);
+                        
+                        // 铺满极限绿幕 #00ff00
+                        ctx.fillStyle = '#00FF00';
+                        ctx.fillRect(0, 0, exportW, exportH);
+
+                        ctx.save();
+                        ctx.filter = `saturate(${settings.saturation}%) hue-rotate(${settings.hue}deg)`;
+                        if (isMirrored) {
+                            ctx.translate(exportW, 0);
+                            ctx.scale(-1, 1);
+                        }
+                        
+                        // 绘制单帧 (原图如有透明通道，底下绿幕会透出来)
+                        ctx.drawImage(imgObj.img, 0, 0, exportW, exportH);
+                        ctx.restore();
+
+                        // 剔除防毛边/反走样的半透明噪点，硬边缘化
+                        const idata = ctx.getImageData(0, 0, exportW, exportH);
+                        const d = idata.data;
+
+                        for (let i = 0; i < d.length; i += 4) {
+                            let isTransparent = false;
+                            if (d[i+3] < 128) {
+                                isTransparent = true;
+                            }
+                            
+                            if (isTransparent) {
+                                d[i] = 0; d[i+1] = 255; d[i+2] = 0; d[i+3] = 255; // 强制绿幕
+                            } else {
+                                d[i+3] = 255; // 强制全不透明，消灭毛边黑圈
+                            }
+                        }
+                        ctx.putImageData(idata, 0, 0);
+
+                        gif.addFrame(c, { copy: true, delay: Math.max(10, Math.round(1000 / settings.fps)) });
+                    });
+
+                    gif.on('finished', function(blob) {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `gbg_anim_${Date.now()}.gif`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        URL.revokeObjectURL(workerUrl);
+                        setIsExtracting(false);
+                        showToast("✅ 无损 GIF 导出成功！");
+                    });
+
+                    gif.render();
+                } else {
+                    // 非雪碧图来源，强制导出 PNG 大图
+                    const tmp = document.createElement('canvas');
+                    const mw = Math.max(...images.map(i => i.width)); const mh = Math.max(...images.map(i => i.height));
+                    let cols = settings.columns > 0 ? settings.columns : Math.ceil(Math.sqrt(images.length));
+                    if (cols === 0) cols = 4;
+                    const w = cols * mw + (cols - 1) * settings.padding;
+                    const h = Math.ceil(images.length / cols) * mh + (Math.ceil(images.length / cols) - 1) * settings.padding;
+                    tmp.width = w; tmp.height = h;
+                    drawCore(tmp.getContext('2d'), w, h, true);
+                    const a = document.createElement('a'); a.download=`sprite_sheet_${Date.now()}.png`; a.href=tmp.toDataURL('image/png'); a.click();
+                    showToast("✅ 完美雪碧图导出成功！");
+                }
             };
 
-            const removeImage = (id) => {
-                setImages(prev => {
-                    const newImages = prev.filter(img => img.id !== id);
-                    if (currentFrame >= newImages.length && newImages.length > 0) setCurrentFrame(newImages.length - 1);
-                    else if (newImages.length === 0) setCurrentFrame(0);
-                    return newImages;
-                });
+            const handleDurationChange = (val) => {
+                setVideoDurationSetting(val);
+                if (videoFile) handleVideo({ target: { files: [videoFile] } });
             };
-
-            const clearAll = () => { setImages([]); setTransparentColor(null); setVideoFile(null); setCurrentFrame(0); };
 
             const handleToleranceChange = (v) => {
                 if (!transparentColor) { setShouldShakePickBtn(true); setTimeout(() => setShouldShakePickBtn(false), 500); return; }
                 setSettings({...settings, tolerance: v});
             };
 
+            const removeImage = (id) => {
+                setImages(prev => {
+                    const next = prev.filter(img => img.id !== id);
+                    if (currentFrame >= next.length && next.length > 0) setCurrentFrame(next.length - 1);
+                    return next;
+                });
+            };
+
+            const clearAll = () => { setImages([]); setTransparentColor(null); setVideoFile(null); setOriginalSpriteSheet(null); setCurrentFrame(0); setImportSource('image'); };
+
+            const moveImage = (idx, dir) => {
+                const newI = [...images];
+                if (dir === 'up' && idx > 0) [newI[idx - 1], newI[idx]] = [newI[idx], newI[idx - 1]];
+                if (dir === 'down' && idx < images.length - 1) [newI[idx + 1], newI[idx]] = [newI[idx], newI[idx + 1]];
+                setImages(newI);
+            };
+
             const Slider = ({ label, value, min, max, onChange, suffix = '' }) => (
                 <div className="flex flex-col gap-1.5">
-                    <div className="flex justify-between text-[11px] font-black text-gray-400 uppercase tracking-widest text-left">
+                    <div className="flex justify-between text-[11px] font-black text-gray-500 uppercase tracking-widest text-left">
                         <span>{label}</span>
                         <span className="text-gray-900 font-mono">{value===0 && !suffix ? 'AUTO' : `${value}${suffix}`}</span>
                     </div>
@@ -491,13 +629,15 @@
                 </div>
             );
 
+            const isExportingGifBtn = importSource === 'spritesheet';
+
             return (
                 <div className="h-[100dvh] flex flex-col items-center justify-center p-4 text-gray-900 bg-gray-100">
                     <input type="file" ref={fileInputRef} onChange={e=>handleFiles(e.target.files)} accept="image/*" multiple className="hidden" />
                     <input type="file" ref={videoInputRef} onChange={handleVideo} accept="video/*" className="hidden" />
+                    <input type="file" ref={spriteSheetInputRef} onChange={handleSpriteSheet} accept="image/*" className="hidden" />
                     <input type="file" ref={uiRuleInputRef} onChange={handleUploadUIRules} accept=".json" className="hidden" />
 
-                    {/* 全局 Toast 提示 - 完全无阴影 */}
                     {toastMessage && (
                         <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[200] bg-gray-900 text-white px-8 py-4 rounded-full animate-pop-in flex items-center gap-3">
                             <span className="text-[12px] font-black tracking-widest">{toastMessage}</span>
@@ -508,15 +648,15 @@
                         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={()=>setShowDonationModal(false)}>
                             <div className="bg-white p-10 max-w-2xl w-full relative flex flex-col items-center animate-pop-in rounded-[32px]" onClick={e=>e.stopPropagation()}>
                                 <button onClick={()=>setShowDonationModal(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 p-2 transition-all"><Icons.Close size={24}/></button>
-                                <h2 className="text-2xl font-black mb-2 mt-4 tracking-tight text-gray-900 text-center">请我喝杯咖啡 ☕️</h2>
+                                <h2 className="text-2xl font-black mb-2 mt-4 tracking-tight text-center">请我喝杯咖啡 ☕️</h2>
                                 <p className="text-sm font-bold text-gray-400 mb-10 tracking-widest uppercase text-center">感谢支持独立开发</p>
                                 <div className="flex gap-8 w-full justify-center text-center">
-                                    <div className="flex flex-col items-center bg-gray-50 p-6 rounded-[24px] w-[240px]">
-                                        <div className="w-full aspect-square bg-white rounded-[20px] overflow-hidden mb-4 flex items-center justify-center"><img src="others/wechatpay.jpg" className="max-w-full max-h-full object-cover" alt="wechat" /></div>
+                                    <div className="flex flex-col items-center bg-gray-50 border-none p-6 rounded-[24px] w-[240px]">
+                                        <div className="w-full aspect-square bg-white rounded-[20px] overflow-hidden mb-4 flex items-center justify-center"><img src="others/wechatpay.jpg" className="max-w-full h-full object-cover" alt="wechat" /></div>
                                         <span className="text-sm font-black text-[#07c160] tracking-widest uppercase">微信支付</span>
                                     </div>
-                                    <div className="flex flex-col items-center bg-gray-50 p-6 rounded-[24px] w-[240px]">
-                                        <div className="w-full aspect-square bg-white rounded-[20px] overflow-hidden mb-4 flex items-center justify-center"><img src="others/alipay.jpg" className="max-w-full max-h-full object-cover" alt="alipay" /></div>
+                                    <div className="flex flex-col items-center bg-gray-50 border-none p-6 rounded-[24px] w-[240px]">
+                                        <div className="w-full aspect-square bg-white rounded-[20px] overflow-hidden mb-4 flex items-center justify-center"><img src="others/alipay.jpg" className="max-w-full h-full object-cover" alt="alipay" /></div>
                                         <span className="text-sm font-black text-[#1677ff] tracking-widest uppercase">支付宝</span>
                                     </div>
                                 </div>
@@ -525,7 +665,6 @@
                     )}
 
                     <div className="w-[95vw] max-w-[1400px] flex flex-col gap-4 h-full max-h-[900px] animate-pop-in">
-                        {/* 顶栏 Header: 绝对无描边和阴影 */}
                         <header className="bg-white py-3 px-6 rounded-full flex items-center justify-between z-20 shrink-0">
                             <div className="flex items-center gap-5 text-left">
                                 <div className="relative">
@@ -556,7 +695,9 @@
                             </div>
                             <div className="flex gap-2">
                                 <button onClick={()=>fileInputRef.current.click()} className="px-7 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-black uppercase tracking-widest rounded-full transition-all">上传</button>
-                                <button onClick={download} disabled={images.length===0} className="px-7 py-2.5 bg-[#b0b3b8] hover:bg-gray-500 text-white text-sm font-black uppercase tracking-widest rounded-full transition-all active:scale-95 disabled:opacity-30">导出</button>
+                                <button onClick={handleExport} disabled={images.length===0 || isExtracting} className={`px-7 py-2.5 ${isExtracting ? 'bg-gray-400 cursor-wait' : 'bg-[#b0b3b8] hover:bg-gray-500'} text-white text-sm font-black uppercase tracking-widest rounded-full transition-all active:scale-95 disabled:opacity-30`}>
+                                    {isExtracting ? '处理中...' : (isExportingGifBtn ? '导出透明 GIF' : '导出合并大图')}
+                                </button>
                                 <button onClick={()=>setShowDonationModal(true)} className="px-4 py-2.5 bg-gray-100 text-gray-800 rounded-full btn-coffee-lab transition-all"><Icons.Coffee /></button>
                             </div>
                         </header>
@@ -564,16 +705,19 @@
                         <main className="flex gap-4 flex-1 min-h-0">
                             <aside className="w-[320px] bg-white p-4 rounded-[28px] flex flex-col gap-3 overflow-hidden shrink-0">
                                 <div className="flex bg-gray-50 p-1.5 rounded-full shrink-0">
-                                    <button onClick={()=>setPreviewMode('anim')} className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-full transition-all ${previewMode==='anim'?'bg-white text-gray-900 shadow-sm':'text-gray-400 hover:text-gray-600'}`}>动画 / Anim</button>
-                                    <button onClick={()=>setPreviewMode('sheet')} className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-full transition-all ${previewMode==='sheet'?'bg-white text-gray-900 shadow-sm':'text-gray-400 hover:text-gray-600'}`}>雪碧图 / Sheet</button>
+                                    <button onClick={()=>setPreviewMode('anim')} className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-full transition-all ${previewMode==='anim'?'bg-white text-gray-900 shadow-none':'text-gray-400 hover:text-gray-600'}`}>动画 / Anim</button>
+                                    <button onClick={()=>setPreviewMode('sheet')} className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-full transition-all ${previewMode==='sheet'?'bg-white text-gray-900 shadow-none':'text-gray-400 hover:text-gray-600'}`}>大图 / Sheet</button>
                                 </div>
-                                <div className={`bg-gray-50 p-6 rounded-[24px] flex flex-col items-center justify-center cursor-pointer transition-all shrink-0 ${isDragging?'bg-gray-200 scale-[1.02]':'hover:bg-gray-100'}`} onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop} onClick={()=>fileInputRef.current.click()}>
-                                    <Icons.Upload size={22} className="text-gray-700" /><p className="text-[12px] font-black mt-3 text-gray-700 tracking-wide text-center uppercase">上传或拖拽图片</p>
+                                <div className={`bg-gray-50 p-5 rounded-[24px] flex flex-col items-center justify-center cursor-pointer transition-all shrink-0 ${isDragging?'bg-gray-200 scale-[1.02]':'hover:bg-gray-100'}`} onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop} onClick={()=>fileInputRef.current.click()}>
+                                    <Icons.Upload size={20} className="text-gray-700" /><p className="text-[11px] font-black mt-2 text-gray-700 tracking-wide uppercase text-center">上传单图序列</p>
                                 </div>
-                                <button onClick={()=>videoInputRef.current?.click()} className="bg-gray-50 hover:bg-gray-100 py-4 rounded-[24px] flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-widest transition-all text-gray-600 shrink-0"><Icons.Video size={18} /> 导入视频 / Video</button>
+                                <div className="grid grid-cols-2 gap-2 shrink-0">
+                                    <button onClick={()=>videoInputRef.current?.click()} className="bg-gray-50 hover:bg-gray-100 py-3 rounded-[24px] flex flex-col items-center justify-center gap-1 text-[9px] font-black uppercase tracking-widest transition-all text-gray-600"><Icons.Video size={16} /> 导入视频</button>
+                                    <button onClick={()=>spriteSheetInputRef.current?.click()} className="bg-gray-50 hover:bg-gray-100 py-3 rounded-[24px] flex flex-col items-center justify-center gap-1 text-[9px] font-black uppercase tracking-widest transition-all text-gray-600"><Icons.Grid size={16} /> 导入雪碧图</button>
+                                </div>
                                 <div className="flex-1 bg-gray-50 p-5 rounded-[24px] overflow-y-auto no-scrollbar flex flex-col text-left gap-5">
                                     <div className="flex flex-col gap-4">
-                                        <Slider label="排版列数 / Columns" value={settings.columns} min={0} max={Math.max(10,images.length)} onChange={v=>setSettings({...settings, columns:v})} />
+                                        <Slider label="智能分割列数" value={settings.columns} min={0} max={Math.max(20,images.length)} onChange={v=>setSettings({...settings, columns:v})} />
                                         <Slider label="切片间距 / Padding" value={settings.padding} min={0} max={50} onChange={v=>setSettings({...settings, padding:v})} suffix="PX" />
                                         <Slider label="播放速度 / FPS" value={settings.fps} min={1} max={60} onChange={v=>setSettings({...settings, fps:v})} suffix="FPS" />
                                         <Slider label="饱和度 / Saturation" value={settings.saturation} min={0} max={200} onChange={v=>setSettings({...settings, saturation:v})} suffix="%" />
@@ -581,17 +725,17 @@
                                     </div>
                                     {videoFile && (
                                         <div className="flex flex-col gap-2 pt-2 shrink-0 border-t border-gray-200/50">
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">视频提取 / Extraction</p>
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">视频提取时间</p>
                                             <div className="flex bg-gray-200/50 p-1 rounded-full gap-1">
                                                 {[1,5,10].map(v=>(
-                                                    <button key={v} onClick={()=>handleDurationChange(v)} disabled={isExtracting} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all ${videoDurationSetting===v?'bg-white text-gray-900 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>{v}S</button>
+                                                    <button key={v} onClick={()=>handleDurationChange(v)} disabled={isExtracting} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all ${videoDurationSetting===v?'bg-white text-gray-900 shadow-none':'text-gray-500 hover:text-gray-100'}`}>{v}S</button>
                                                 ))}
                                             </div>
                                         </div>
                                     )}
-                                    <div className="pt-2 flex flex-col gap-3 border-t border-gray-200/50 text-left shrink-0">
+                                    <div className="pt-2 flex flex-col gap-3 border-t-0 text-left shrink-0">
                                         <div className="flex justify-between items-center"><p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">透明抠图 / Transparency</p>{transparentColor && <button onClick={()=>setTransparentColor(null)} className="text-[10px] font-black text-red-500 uppercase hover:underline">清除</button>}</div>
-                                        <button onClick={()=>setIsPickingColor(!isPickingColor)} className={`w-full py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${shouldShakePickBtn?'animate-shake bg-red-100 text-red-600':(isPickingColor?'bg-gray-900 text-white shadow-xl':'bg-gray-200/60 text-gray-700 hover:bg-gray-200')}`}><Icons.Pipette size={16}/>{isPickingColor?'请取色':'吸取背景色'}</button>
+                                        <button onClick={()=>setIsPickingColor(!isPickingColor)} className={`w-full py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${shouldShakePickBtn?'animate-shake bg-red-400 text-white':(isPickingColor?'bg-gray-900 text-white':'bg-gray-200/60 text-gray-700 hover:bg-gray-200')}`}><Icons.Pipette size={16}/>{isPickingColor?'请在中间画板取色':'吸取背景色'}</button>
                                         <Slider label="调节容差 / Tolerance" value={settings.tolerance} min={0} max={150} onChange={handleToleranceChange} />
                                     </div>
                                 </div>
@@ -603,9 +747,10 @@
                                         <div className={`w-1.5 h-1.5 rounded-full ${images.length===0?'bg-gray-200':(isPickingColor?'bg-yellow-400 animate-pulse':'bg-red-500 animate-fast-blink')}`} />
                                         <span className="text-[11px] text-gray-400 font-black uppercase tracking-[0.2em] leading-none mt-0.5">显示输出 / Live Output</span>
                                     </div>
+                                    {importSource === 'spritesheet' && <span className="ml-4 text-[9px] bg-gray-900 text-white px-2 py-0.5 rounded-full font-black uppercase">导出格式锁：无损 GIF</span>}
                                 </div>
                                 <div className="flex-1 checkered-bg overflow-auto p-8 flex items-center justify-center relative">
-                                    {isExtracting && <div className="absolute inset-0 bg-white/70 backdrop-blur-md flex flex-col items-center justify-center z-50"><div className="w-8 h-8 border-4 border-gray-100 border-t-gray-900 rounded-full animate-spin mb-4" /><p className="text-[11px] font-black tracking-widest text-gray-900 uppercase animate-pulse">正在提取...</p></div>}
+                                    {isExtracting && <div className="absolute inset-0 bg-white/70 backdrop-blur-md flex flex-col items-center justify-center z-50"><div className="w-8 h-8 border-4 border-gray-100 border-t-gray-900 rounded-full animate-spin mb-4" /><p className="text-[11px] font-black tracking-widest text-gray-900 uppercase animate-pulse">处理中...</p></div>}
                                     {images.length===0 ? (
                                         <div onClick={()=>fileInputRef.current.click()} className="cursor-pointer group flex flex-col items-center opacity-40 hover:opacity-100 transition-opacity"><p className="text-3xl font-black text-gray-200 tracking-tight text-center leading-none uppercase">Empty</p></div>
                                     ) : (
@@ -613,14 +758,14 @@
                                     )}
                                 </div>
                                 <footer className="h-16 relative flex items-center justify-between px-6 bg-white opacity-90 shrink-0">
-                                    <div className="flex flex-col text-left"><span className="text-[9px] font-black uppercase text-gray-400 tracking-widest">系统状态 / Status</span><span className="text-[11px] font-black tracking-wider text-gray-600 leading-none mt-1 uppercase">Signal: Nominal</span></div>
+                                    <div className="flex flex-col text-left flex-1"><span className="text-[9px] font-black uppercase text-gray-400 tracking-widest leading-none">系统状态 / Status</span><span className="text-[11px] font-black tracking-wider text-gray-600 leading-none mt-1 uppercase">Signal: Nominal</span></div>
                                     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 bg-gray-50 px-4 py-1.5 rounded-full pointer-events-auto">
                                         <button className={`btn-status-icon ${isPlaying ? 'active' : ''}`} onClick={() => setIsPlaying(true)} title="播放"><Icons.Play size={18} /></button>
                                         <button className={`btn-status-icon ${!isPlaying ? 'active' : ''}`} onClick={() => setIsPlaying(false)} title="暂停"><Icons.Pause size={18} /></button>
                                         <div className="w-px h-5 bg-gray-200 mx-2" />
                                         <button className={`btn-status-icon ${isMirrored ? 'active' : ''}`} onClick={() => setIsMirrored(!isMirrored)} title="镜像翻转"><Icons.Mirror size={20} /></button>
                                     </div>
-                                    <div className="text-right flex flex-col text-right"><span className="text-[9px] font-black uppercase text-gray-400 tracking-widest">信息 / Info</span><span className="text-[11px] font-mono font-black uppercase text-gray-600 leading-none mt-1">{previewMode==='anim' ? `F:${currentFrame+1}/${images.length}` : `W:${canvasSize.width} H:${canvasSize.height}`}</span></div>
+                                    <div className="text-right flex flex-col text-right flex-1 items-end"><span className="text-[9px] font-black uppercase text-gray-400 tracking-widest leading-none">信息 / Info</span><span className="text-[11px] font-mono font-black uppercase text-gray-600 leading-none mt-1">{previewMode==='anim' ? `F:${currentFrame+1}/${images.length}` : `W:${canvasSize.width} H:${canvasSize.height}`}</span></div>
                                 </footer>
                             </div>
 
@@ -637,7 +782,7 @@
                                                 <div className="flex-1 min-w-0 flex flex-col justify-center"><p className="text-[13px] font-black text-gray-900 truncate leading-tight mb-1" title={img.name}>{img.name}</p><p className="text-[11px] font-black text-gray-400 font-mono uppercase leading-tight">{img.width}x{img.height}</p></div>
                                                 <div className="flex items-center gap-2 shrink-0">
                                                     <div className="flex flex-col gap-1"><button onClick={()=>moveImage(idx,'up')} disabled={idx===0} className="text-gray-300 hover:text-gray-900 disabled:opacity-20 transition-colors"><Icons.ChevronUp size={14} /></button><button onClick={()=>moveImage(idx,'down')} disabled={idx===images.length-1} className="text-gray-300 hover:text-gray-900 disabled:opacity-20 transition-colors"><Icons.ChevronDown size={14} /></button></div>
-                                                    <button onClick={()=>removeImage(img.id)} className="w-10 h-10 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 rounded-[12px] transition-all ml-1"><Icons.Trash size={16} /></button>
+                                                    <button onClick={()=>removeImage(img.id)} className="w-10 h-10 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 rounded-[12px] transition-all ml-1 border-none"><Icons.Trash size={16} /></button>
                                                 </div>
                                             </div>
                                         ))}
