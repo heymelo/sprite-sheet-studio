@@ -120,6 +120,7 @@
         const DEFAULT_VIDEO_EXTRACTION_FPS = 10;
         const VIDEO_SEEK_TIMEOUT_MS = 5000;
         const VIDEO_SEEK_EPSILON_SEC = 1 / 120;
+        const VIDEO_FRAME_SETTLE_TIMEOUT_MS = 80;
         const QUICK_DURATION_PRESETS = [1, 3, 5, 10];
 
         function App() {
@@ -235,11 +236,28 @@
             };
 
             const waitForVideoFrame = (video) => new Promise((resolve) => {
+                let settled = false;
+                let videoFrameRequestId = null;
+                let rafId = null;
+                const finish = () => {
+                    if (settled) return;
+                    settled = true;
+                    if (videoFrameRequestId !== null && typeof video.cancelVideoFrameCallback === 'function') {
+                        video.cancelVideoFrameCallback(videoFrameRequestId);
+                    }
+                    if (rafId !== null) {
+                        cancelAnimationFrame(rafId);
+                    }
+                    clearTimeout(timeoutId);
+                    resolve();
+                };
+
                 if (typeof video.requestVideoFrameCallback === 'function') {
-                    video.requestVideoFrameCallback(() => resolve());
-                } else {
-                    requestAnimationFrame(() => resolve());
+                    videoFrameRequestId = video.requestVideoFrameCallback(() => finish());
                 }
+
+                rafId = requestAnimationFrame(() => finish());
+                const timeoutId = setTimeout(() => finish(), VIDEO_FRAME_SETTLE_TIMEOUT_MS);
             });
 
             const seekVideoToTime = (video, targetTime) => new Promise((resolve, reject) => {
@@ -336,6 +354,7 @@
                         video.onloadedmetadata = resolve;
                         video.onerror = () => reject(new Error('Video metadata failed to load'));
                         video.src = objectUrl;
+                        video.load();
                     });
 
                     video.pause();
@@ -1165,6 +1184,48 @@
                 if (videoFile) extractVideoFrames(videoFile, nextSettings);
             };
 
+            const applyXiaomoPreset = async () => {
+                if (isExtracting) return;
+
+                const nextVideoSettings = {
+                    startSec: 0,
+                    durationSec: 5,
+                    fps: 8,
+                    useFullDuration: true
+                };
+
+                setSettings((prev) => ({
+                    ...prev,
+                    columns: 8,
+                    fps: 8,
+                    tolerance: 20
+                }));
+                setExportMode('sheet-webp');
+                setWebpQuality(92);
+                setExportSizing({
+                    mode: 'max-edge',
+                    maxEdge: 128
+                });
+                setTransparentColor({ r: 245, g: 245, b: 245 });
+                setTrimSettings({
+                    enabled: true,
+                    padding: 6,
+                    alphaThreshold: 10
+                });
+                setDedupeSettings({
+                    enabled: true,
+                    threshold: 6,
+                    sampleSize: 16
+                });
+                setVideoExtractSettings(nextVideoSettings);
+
+                showToast("✨ 已应用小墨预设");
+
+                if (videoFile) {
+                    await extractVideoFrames(videoFile, nextVideoSettings);
+                }
+            };
+
             const handleToleranceChange = (v) => {
                 if (!transparentColor) { setShouldShakePickBtn(true); setTimeout(() => setShouldShakePickBtn(false), 500); return; }
                 setSettings({...settings, tolerance: v});
@@ -1359,6 +1420,21 @@
                                         <Slider label="播放速度 / FPS" value={settings.fps} min={1} max={60} onChange={v=>setSettings({...settings, fps:v})} suffix="FPS" />
                                         <Slider label="饱和度 / Saturation" value={settings.saturation} min={0} max={200} onChange={v=>setSettings({...settings, saturation:v})} suffix="%" />
                                         <Slider label="色相 / Hue" value={settings.hue} min={0} max={360} onChange={v=>setSettings({...settings, hue:v})} suffix="°" />
+                                    </div>
+                                    <div className="flex flex-col gap-3 pt-2 shrink-0 border-t border-gray-200/50 text-left">
+                                        <div className="flex justify-between items-center">
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-left">快速预设 / Presets</p>
+                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Mascot</span>
+                                        </div>
+                                        <button onClick={applyXiaomoPreset} disabled={isExtracting} className="w-full py-3 px-4 rounded-[18px] bg-white hover:bg-gray-100 disabled:opacity-40 transition-all border-none text-left">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="flex flex-col leading-none">
+                                                    <span className="text-[11px] font-black text-gray-900 tracking-wide">小墨推荐参数</span>
+                                                    <span className="mt-1 text-[8px] font-semibold text-gray-400 tracking-[0.18em] uppercase">Xiaomo WebP 128 Preset</span>
+                                                </div>
+                                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">8 FPS</span>
+                                            </div>
+                                        </button>
                                     </div>
                                     <div className="flex flex-col gap-2 pt-2 shrink-0 border-t border-gray-200/50">
                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-left">导出模式 / Export</p>
