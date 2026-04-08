@@ -1347,9 +1347,9 @@
                                     <div className="flex flex-col gap-2 pt-2 shrink-0 border-t border-gray-200/50">
                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-left">导出模式 / Export</p>
                                         <div className="flex bg-gray-200/50 p-1 rounded-full gap-1">
-                                            <button onClick={() => setExportMode('sheet-png')} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${exportMode==='sheet-png'?'bg-white text-gray-900':'text-gray-500 hover:text-gray-100'}`}>PNG</button>
-                                            <button onClick={() => setExportMode('sheet-webp')} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${exportMode==='sheet-webp'?'bg-white text-gray-900':'text-gray-500 hover:text-gray-100'}`}>WebP</button>
-                                            <button onClick={() => setExportMode('gif')} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${exportMode==='gif'?'bg-white text-gray-900':'text-gray-500 hover:text-gray-100'}`}>GIF</button>
+                                            <button onClick={() => setExportMode('sheet-png')} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${exportMode==='sheet-png'?'bg-white text-gray-900':'text-gray-500 hover:bg-white/70 hover:text-gray-700'}`}>PNG</button>
+                                            <button onClick={() => setExportMode('sheet-webp')} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${exportMode==='sheet-webp'?'bg-white text-gray-900':'text-gray-500 hover:bg-white/70 hover:text-gray-700'}`}>WebP</button>
+                                            <button onClick={() => setExportMode('gif')} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${exportMode==='gif'?'bg-white text-gray-900':'text-gray-500 hover:bg-white/70 hover:text-gray-700'}`}>GIF</button>
                                         </div>
                                         {exportMode === 'sheet-webp' && (
                                             <Slider label="WebP 质量 / Quality" value={webpQuality} min={50} max={100} onChange={setWebpQuality} suffix="%" />
@@ -1358,8 +1358,8 @@
                                     <div className="flex flex-col gap-2 pt-2 shrink-0 border-t border-gray-200/50">
                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-left">导出尺寸 / Export Size</p>
                                         <div className="flex bg-gray-200/50 p-1 rounded-full gap-1">
-                                            <button onClick={() => setExportSizing({ ...exportSizing, mode: 'original' })} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${exportSizing.mode==='original'?'bg-white text-gray-900':'text-gray-500 hover:text-gray-100'}`}>Original</button>
-                                            <button onClick={() => setExportSizing({ ...exportSizing, mode: 'max-edge' })} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${exportSizing.mode==='max-edge'?'bg-white text-gray-900':'text-gray-500 hover:text-gray-100'}`}>Max Edge</button>
+                                            <button onClick={() => setExportSizing({ ...exportSizing, mode: 'original' })} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${exportSizing.mode==='original'?'bg-white text-gray-900':'text-gray-500 hover:bg-white/70 hover:text-gray-700'}`}>Original</button>
+                                            <button onClick={() => setExportSizing({ ...exportSizing, mode: 'max-edge' })} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${exportSizing.mode==='max-edge'?'bg-white text-gray-900':'text-gray-500 hover:bg-white/70 hover:text-gray-700'}`}>Max Edge</button>
                                         </div>
                                         {exportSizing.mode === 'max-edge' && (
                                             <Slider label="最长边 / Max Edge" value={exportSizing.maxEdge} min={16} max={512} onChange={v=>setExportSizing({...exportSizing, maxEdge:v})} suffix="PX" />
@@ -1373,9 +1373,9 @@
                                             </div>
                                             <div className="flex bg-gray-200/50 p-1 rounded-full gap-1">
                                                 {QUICK_DURATION_PRESETS.map(v=>(
-                                                    <button key={v} onClick={()=>handleDurationChange(v)} disabled={isExtracting} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${!videoExtractSettings.useFullDuration && videoExtractSettings.durationSec===v?'bg-white text-gray-900':'text-gray-500 hover:text-gray-100'}`}>{v}S</button>
+                                                    <button key={v} onClick={()=>handleDurationChange(v)} disabled={isExtracting} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${!videoExtractSettings.useFullDuration && videoExtractSettings.durationSec===v?'bg-white text-gray-900':'text-gray-500 hover:bg-white/70 hover:text-gray-700'}`}>{v}S</button>
                                                 ))}
-                                                <button onClick={() => rerunVideoExtraction({ useFullDuration: true })} disabled={isExtracting} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${videoExtractSettings.useFullDuration ? 'bg-white text-gray-900' : 'text-gray-500 hover:text-gray-100'}`}>FULL</button>
+                                                <button onClick={() => rerunVideoExtraction({ useFullDuration: true })} disabled={isExtracting} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${videoExtractSettings.useFullDuration ? 'bg-white text-gray-900' : 'text-gray-500 hover:bg-white/70 hover:text-gray-700'}`}>FULL</button>
                                             </div>
                                             <div className="grid grid-cols-2 gap-3">
                                                 <label className="flex flex-col gap-1.5 text-left">
