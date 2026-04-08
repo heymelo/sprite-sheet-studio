@@ -1207,7 +1207,9 @@
                 </div>
             );
 
-            const isExportingGifBtn = exportMode === 'gif';
+            const exportSheetLabel = exportMode === 'gif'
+                ? '导出 GIF'
+                : (exportMode === 'sheet-webp' ? '导出 WebP Sheet' : '导出 PNG Sheet');
             const extractionPreview = videoMeta ? getVideoExtractionPlan(videoMeta, videoExtractSettings) : null;
 
             return (
@@ -1276,25 +1278,48 @@
                     )}
 
                     <div className="w-[95vw] max-w-[1400px] flex flex-col gap-4 h-full max-h-[900px] animate-pop-in">
-                        <header className="bg-white py-3 px-6 rounded-full flex items-center justify-between z-20 shrink-0 border-none">
-                            <div className="flex items-center gap-5 text-left">
-                                <div className="w-11 h-11 bg-gray-100 rounded-[14px] flex items-center justify-center overflow-hidden shrink-0">
-                                    <img src="others/icon.png" alt={APP_NAME} className="w-9 h-9 object-contain" />
+                        <header className="bg-white py-3 px-6 rounded-full flex items-center justify-between gap-6 z-20 shrink-0 border-none">
+                            <div className="flex items-center gap-4 text-left min-w-0 flex-1 pr-4">
+                                <div className="w-11 h-11 bg-gray-900 text-white rounded-[14px] flex items-center justify-center overflow-hidden shrink-0 font-black text-[15px] tracking-tight">
+                                    <span>SS</span>
                                 </div>
-                                <div className="flex flex-col text-left">
+                                <div className="flex flex-col text-left min-w-0">
                                     <h1 className="text-xl font-black tracking-tight text-gray-900 leading-none uppercase">{APP_NAME}</h1>
-                                    <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mt-1.5 leading-none">{APP_TAGLINE}</p>
+                                    <p className="text-[11px] font-semibold text-gray-400 mt-1.5 leading-none max-w-[340px] xl:max-w-[440px] truncate">{APP_TAGLINE}</p>
                                 </div>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex items-center gap-2 shrink-0">
                                 <button onClick={()=>fileInputRef.current.click()} className="px-7 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-black uppercase tracking-widest rounded-full transition-all border-none">上传</button>
-                                <button onClick={handleExport} disabled={images.length===0 || isExtracting} className={`px-7 py-2.5 ${isExtracting ? 'bg-gray-400 cursor-wait' : 'bg-[#b0b3b8] hover:bg-gray-500'} text-white text-sm font-black uppercase tracking-widest rounded-full transition-all active:scale-95 disabled:opacity-30 border-none`}>
-                                    {isExtracting ? '处理中...' : (exportMode === 'gif' ? '导出 GIF' : (exportMode === 'sheet-webp' ? '导出 WebP Sheet' : '导出 PNG Sheet'))}
-                                </button>
-                                <button onClick={handleExportZip} disabled={images.length===0 || isExtracting} className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-black uppercase tracking-widest rounded-full transition-all active:scale-95 disabled:opacity-30 border-none">导出 ZIP</button>
-                                <button onClick={() => handleExportSequence('png')} disabled={images.length===0 || isExtracting} className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-black uppercase tracking-widest rounded-full transition-all active:scale-95 disabled:opacity-30 border-none">导出帧 PNG</button>
-                                <button onClick={() => handleExportSequence('webp')} disabled={images.length===0 || isExtracting} className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-black uppercase tracking-widest rounded-full transition-all active:scale-95 disabled:opacity-30 border-none">导出帧 WebP</button>
-                                <button onClick={handleExportMetadata} disabled={images.length===0 || isExtracting} className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-black uppercase tracking-widest rounded-full transition-all active:scale-95 disabled:opacity-30 border-none">导出 JSON</button>
+                                <div className="relative group">
+                                    <button disabled={images.length===0 || isExtracting} className={`px-7 py-2.5 flex items-center gap-2 ${isExtracting ? 'bg-gray-400 cursor-wait' : 'bg-[#b0b3b8] hover:bg-gray-500 group-hover:bg-gray-500'} text-white text-sm font-black uppercase tracking-widest rounded-full transition-all active:scale-95 disabled:opacity-30 border-none`}>
+                                        <span>{isExtracting ? '处理中...' : '导出'}</span>
+                                        <Icons.ChevronDown size={14} />
+                                    </button>
+                                    <div className="absolute right-0 top-full pt-3 opacity-0 pointer-events-none translate-y-1 group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 transition-all duration-150 z-50">
+                                        <div className="w-[240px] bg-white rounded-[24px] p-2 shadow-[0_20px_60px_rgba(15,23,42,0.12)] flex flex-col gap-1">
+                                            <button onClick={handleExport} disabled={images.length===0 || isExtracting} className="flex items-center justify-between gap-3 px-4 py-3 text-[11px] font-black text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-[18px] transition-all w-full text-left uppercase tracking-widest disabled:opacity-30 border-none">
+                                                <span>{exportSheetLabel}</span>
+                                                <span className="text-[9px] text-gray-400">Sheet</span>
+                                            </button>
+                                            <button onClick={handleExportZip} disabled={images.length===0 || isExtracting} className="flex items-center justify-between gap-3 px-4 py-3 text-[11px] font-black text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-[18px] transition-all w-full text-left uppercase tracking-widest disabled:opacity-30 border-none">
+                                                <span>导出 ZIP</span>
+                                                <span className="text-[9px] text-gray-400">Bundle</span>
+                                            </button>
+                                            <button onClick={() => handleExportSequence('png')} disabled={images.length===0 || isExtracting} className="flex items-center justify-between gap-3 px-4 py-3 text-[11px] font-black text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-[18px] transition-all w-full text-left uppercase tracking-widest disabled:opacity-30 border-none">
+                                                <span>导出帧 PNG</span>
+                                                <span className="text-[9px] text-gray-400">Frames</span>
+                                            </button>
+                                            <button onClick={() => handleExportSequence('webp')} disabled={images.length===0 || isExtracting} className="flex items-center justify-between gap-3 px-4 py-3 text-[11px] font-black text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-[18px] transition-all w-full text-left uppercase tracking-widest disabled:opacity-30 border-none">
+                                                <span>导出帧 WebP</span>
+                                                <span className="text-[9px] text-gray-400">Frames</span>
+                                            </button>
+                                            <button onClick={handleExportMetadata} disabled={images.length===0 || isExtracting} className="flex items-center justify-between gap-3 px-4 py-3 text-[11px] font-black text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-[18px] transition-all w-full text-left uppercase tracking-widest disabled:opacity-30 border-none">
+                                                <span>导出 JSON</span>
+                                                <span className="text-[9px] text-gray-400">Meta</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </header>
 

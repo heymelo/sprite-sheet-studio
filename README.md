@@ -4,6 +4,10 @@
 
 Sprite Sheet Studio is a browser-based sprite production tool for turning image sequences, videos, or existing sprite sheets into clean export assets.
 
+## Live Preview
+
+- [https://heymelo.github.io/sprite-sheet-studio/](https://heymelo.github.io/sprite-sheet-studio/)
+
 It is designed to be easy to open locally, fast to iterate on, and practical for everyday asset prep work such as:
 
 - extracting frames from video
