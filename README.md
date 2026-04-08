@@ -1,8 +1,57 @@
-请点击这里使用软件 / Please click here ：https://xieyoujune.github.io/GBG-Sprite-Sheet-Maker-For-Godot/  
-  
-#GBG 精灵图实验室 (GBG Sprite Sheet Lab)  #For Godot  
-  
-GBG 精灵图实验室 是一款专为游戏开发者、像素艺术家和动画师设计的轻量级、专业化生产力工具。它旨在将零散的动画帧快速整合为标准化的雪碧图（Sprite Sheet），并提供极致的实时反馈。    
-GBG Sprite Sheet Lab is a professional productivity tool crafted for game developers, pixel artists, and animators. It streamlines merging individual frames or video clips into standardized sprite sheets with instantaneous feedback.  
-  
-iloveugodot
+# Sprite Sheet Studio
+
+> A browser-based sprite sheet studio for video, image sequences, and sprite slicing.
+
+Sprite Sheet Studio is a browser-based sprite production tool for turning image sequences, videos, or existing sprite sheets into clean export assets.
+
+It is designed to be easy to open locally, fast to iterate on, and practical for everyday asset prep work such as:
+
+- extracting frames from video
+- slicing existing sprite sheets
+- removing flat-color backgrounds
+- trimming transparent bounds
+- exporting PNG, WebP, GIF, JSON metadata, and ZIP bundles
+
+## Features
+
+- Import image sequences, video files, or sprite sheets
+- Adjustable sprite sheet columns, padding, playback FPS, hue, and saturation
+- Video extraction controls for start time, duration, and sampling FPS
+- Background color picking with tolerance-based transparency removal
+- Optional trim with padding and alpha threshold controls
+- Optional export-time frame deduplication
+- Export sprite sheets as PNG, WebP, or transparent GIF
+- Export frame sequences as PNG or WebP
+- Export metadata JSON and ZIP bundles with sheet + frames + metadata
+
+## Quick Start
+
+This project is a static web app. You can use it without a build step.
+
+### Option 1
+
+Open [`index.html`](./index.html) directly in a browser.
+
+### Option 2
+
+Serve the folder with any static file server, for example:
+
+```bash
+cd /path/to/sprite-sheet-studio
+python3 -m http.server 8000
+```
+
+Then open `http://localhost:8000`.
+
+## Project Structure
+
+- [`index.html`](./index.html): the entire app UI and logic
+- [`others/`](./others): app icons and supporting static assets
+
+## Fork Origin
+
+This repository is a cleaned-up and extended fork of:
+
+- [xieyoujune/GBG-Sprite-Sheet-Maker-For-Godot](https://github.com/xieyoujune/GBG-Sprite-Sheet-Maker-For-Godot)
+
+The fork direction is to make the tool more neutral, reusable, and production-friendly for general sprite workflows rather than a personal-branded project page.

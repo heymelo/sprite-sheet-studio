@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>GBG Sprite Sheet Maker 精灵图实验室</title>
+    <title>Sprite Sheet Studio</title>
     <link rel="icon" href="others/icon.png" type="image/png">
     
     <meta name="theme-color" content="#f3f4f6">
@@ -18,6 +18,7 @@
     
     <!-- 引入 gif.js 用于纯前端导出透明无损 GIF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     
     <style>
         body { 
@@ -83,22 +84,6 @@
         }
         .custom-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
 
-        @keyframes coffee-pulse {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        .btn-coffee-lab {
-            position: relative; overflow: hidden; z-index: 1; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .btn-coffee-lab::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(-45deg, #1677ff, #07c160, #1677ff, #07c160);
-            background-size: 400% 400%; opacity: 0; z-index: -1; transition: opacity 0.6s ease;
-        }
-        .btn-coffee-lab:hover::before { opacity: 1; animation: coffee-pulse 8s ease infinite; }
-        .btn-coffee-lab:hover { transform: scale(1.05); color: white !important; }
-
         .picker-cursor { cursor: crosshair !important; }
 
         .btn-status-icon {
@@ -124,14 +109,18 @@
             ChevronUp: ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>,
             ChevronDown: ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
             Pipette: ({ size = 18 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m2 22 1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/></svg>,
-            Coffee: ({ size = 18 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="13" y1="1" x2="13" y2="4"/></svg>,
             Close: ({ size = 24 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
             Play: ({ size = 18 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>,
             Pause: ({ size = 18 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>,
             Mirror: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 20L3 12L10 4V20Z" /><path d="M14 20L21 12L14 4V20Z" /></svg>
         };
 
-        const DefaultAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23111827'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%23f3f4f6'/%3E%3Cpath d='M20 90 Q50 60 80 90' stroke='%23f3f4f6' stroke-width='10' fill='none'/%3E%3C/svg%3E";
+        const APP_NAME = "Sprite Sheet Studio";
+        const APP_TAGLINE = "A browser-based sprite sheet studio for video, image sequences, and sprite slicing";
+        const DEFAULT_VIDEO_EXTRACTION_FPS = 10;
+        const VIDEO_SEEK_TIMEOUT_MS = 5000;
+        const VIDEO_SEEK_EPSILON_SEC = 1 / 120;
+        const QUICK_DURATION_PRESETS = [1, 3, 5, 10];
 
         function App() {
             const [images, setImages] = useState([]);
@@ -142,34 +131,69 @@
             const [previewMode, setPreviewMode] = useState('anim'); 
             const [transparentColor, setTransparentColor] = useState(null);
             const [isPickingColor, setIsPickingColor] = useState(false);
-            const [showUIMenu, setShowUIMenu] = useState(false);
             const [toastMessage, setToastMessage] = useState(null);
-            const avatarClickCount = useRef(0);
-            const avatarClickTimer = useRef(null);
-            const [showDonationModal, setShowDonationModal] = useState(false);
             const [isPlaying, setIsPlaying] = useState(true);
             const [isMirrored, setIsMirrored] = useState(false);
             const [shouldShakePickBtn, setShouldShakePickBtn] = useState(false);
             const [videoFile, setVideoFile] = useState(null);
             const [isExtracting, setIsExtracting] = useState(false);
-            const [videoDurationSetting, setVideoDurationSetting] = useState(5); 
+            const [videoMeta, setVideoMeta] = useState(null);
+            const [videoExtractSettings, setVideoExtractSettings] = useState({
+                startSec: 0,
+                durationSec: 5,
+                fps: DEFAULT_VIDEO_EXTRACTION_FPS,
+                useFullDuration: false
+            });
+            const [exportMode, setExportMode] = useState('sheet-png');
+            const [webpQuality, setWebpQuality] = useState(92);
+            const [exportSizing, setExportSizing] = useState({
+                mode: 'original',
+                maxEdge: 128
+            });
+            const [dedupeSettings, setDedupeSettings] = useState({
+                enabled: false,
+                threshold: 8,
+                sampleSize: 16
+            });
+            const [trimSettings, setTrimSettings] = useState({
+                enabled: false,
+                padding: 0,
+                alphaThreshold: 8
+            });
             const [importSource, setImportSource] = useState('image'); 
 
             // 切片预览模态框状态
             const [showSpriteModal, setShowSpriteModal] = useState(false);
             const [spriteGrid, setSpriteGrid] = useState({ rows: 1, cols: 4 });
             const [tempSpriteImage, setTempSpriteImage] = useState(null);
+            const trimBoundsCacheRef = useRef(new Map());
+            const frameSignatureCacheRef = useRef(new Map());
 
             const canvasRef = useRef(null);
             const fileInputRef = useRef(null);
             const videoInputRef = useRef(null);
             const spriteSheetInputRef = useRef(null);
-            const uiRuleInputRef = useRef(null);
 
             const showToast = useCallback((msg) => {
                 setToastMessage(msg);
                 setTimeout(() => setToastMessage(null), 3000);
             }, []);
+
+            const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+            const getTransparencySettingsKey = () => JSON.stringify({
+                transparentColor,
+                tolerance: settings.tolerance,
+                trim: trimSettings
+            });
+            const getSignatureSettingsKey = () => JSON.stringify({
+                transparentColor,
+                tolerance: settings.tolerance,
+                trim: trimSettings,
+                hue: settings.hue,
+                saturation: settings.saturation,
+                mirrored: isMirrored,
+                dedupe: dedupeSettings
+            });
 
             useEffect(() => {
                 const handleKeyDown = (e) => {
@@ -183,80 +207,18 @@
                 return () => window.removeEventListener('keydown', handleKeyDown);
             }, []);
 
-            // 隐藏彩蛋：0.6秒内连点三次头像触发开发者菜单
-            const handleAvatarClick = () => {
-                avatarClickCount.current += 1;
-                if (avatarClickCount.current === 3) {
-                    setShowUIMenu(prev => !prev);
-                    avatarClickCount.current = 0;
-                    clearTimeout(avatarClickTimer.current);
-                } else {
-                    clearTimeout(avatarClickTimer.current);
-                    avatarClickTimer.current = setTimeout(() => {
-                        avatarClickCount.current = 0;
-                    }, 600);
-                }
-            };
+            useEffect(() => {
+                trimBoundsCacheRef.current.clear();
+            }, [images, transparentColor, settings.tolerance, trimSettings]);
 
-            const handleDownloadUIRules = () => {
-                const uiRules = {
-                    name: "GBG-UI-Genesis-Rules-Pro-Final",
-                    version: "24.0",
-                    description: "GBG 视觉宇宙最高规范。规定了绝对扁平化、无阴影、大圆角、手动网格切割以及导出100%纯净透明无背景 GIF 的像素级篡改法则。",
-                    designPhilosophy: {
-                        style: "Absolute Flat Design (No borders, No shadows). 严禁使用任何 Tailwind 的 shadow 和 border 属性类。",
-                        visualLayers: "依靠纯净的背景色差区分功能区 (bg-white, bg-gray-50, bg-gray-100)。",
-                        cornerSystem: "Outer Containers: 28px, Inner Cards: 24px/20px, All Buttons & Navs: rounded-full",
-                        scrollbar: "Zero vertical scroll on main layout. 紧凑排版，一屏展示完。"
-                    },
-                    headerSpecs: {
-                        avatar: { src: "others/xieyoujune.jpg", size: "44x44px", shape: "rounded-full", interaction: "连点3次触发开发者菜单" },
-                        links: [
-                            { text: "独立音乐人", url: "https://music.163.com/#/artist?id=1184020" },
-                            { text: "《人生之旅》游戏开发者", url: "https://www.xiaohongshu.com/user/profile/63cac1130000000026006f9a" }
-                        ],
-                        coffeeAnimation: {
-                            style: "linear-gradient(-45deg, #1677ff, #07c160, #1677ff, #07c160)",
-                            duration: "8s infinite pulse"
-                        }
-                    },
-                    functionalLogic: {
-                        importSpritesheet: "弹窗让用户手动输入行数和列数进行精确切割。必须在原图上叠加根据用户输入实时生成的极限绿(#00ff00)网格辅助线，做到所见即所得。弹窗符合全系无边框无阴影设计。",
-                        exportLogic: "【硬性规定】导出 GIF 必须解决绿色背景和边缘黑圈问题！渲染法则：画布绝对不能提前铺设绿幕，必须保持透明。画上图片后，遍历每个像素 ImageData：只要 Alpha 低于阈值，强制将其 RGB 改为 [0,255,0] 且 Alpha 改为 255。对于不透明的像素强制设 Alpha=255，若恰好也是纯绿则微微偏移。最后传给 gif.js transparent: 0x00FF00 (必须是数值型)。",
-                        secretMenu: "Click avatar 3 times within 600ms to open Developer UI Rules menu. 菜单无阴影、无边框，底色 bg-gray-100"
-                    },
-                    assets: {
-                        wechat: "others/wechatpay.jpg",
-                        alipay: "others/alipay.jpg"
-                    }
-                };
-                const blob = new Blob([JSON.stringify(uiRules, null, 2)], { type: "application/json" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a'); a.href = url; a.download = `GBG_Genesis_Rules.json`; a.click();
-                setShowUIMenu(false);
-                showToast("✅ GBG 核心规范 JSON 已导出");
-            };
-
-            const handleUploadUIRules = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    try {
-                        const rules = JSON.parse(event.target.result);
-                        if (rules.name && rules.name.includes("GBG-UI")) showToast("✅ 规范文件已识别并导入成功");
-                        else showToast("❌ 非标规范文件");
-                    } catch (err) { showToast("❌ JSON 解析失败"); }
-                };
-                reader.readAsText(file);
-                setShowUIMenu(false);
-                if (uiRuleInputRef.current) uiRuleInputRef.current.value = '';
-            };
+            useEffect(() => {
+                frameSignatureCacheRef.current.clear();
+            }, [images, transparentColor, settings.tolerance, trimSettings, settings.hue, settings.saturation, isMirrored, dedupeSettings]);
 
             const handleFiles = async (files) => {
                 const validFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
                 if (validFiles.length === 0) return;
-                setImportSource('image'); setVideoFile(null); setCurrentFrame(0);
+                setImportSource('image'); setVideoFile(null); setVideoMeta(null); setCurrentFrame(0);
                 const newImages = await Promise.all(validFiles.map(file => {
                     return new Promise(resolve => {
                         const reader = new FileReader();
@@ -272,28 +234,173 @@
                 setImages(newImages);
             };
 
-            const handleVideo = async (e) => {
-                const file = e.target.files[0]; if (!file) return;
-                setImportSource('video'); setVideoFile(file);
-                setIsExtracting(true); setCurrentFrame(0);
-                const video = document.createElement('video');
-                video.src = URL.createObjectURL(file); video.muted = true; video.preload = "auto";
-                video.onloadedmetadata = async () => {
-                    try {
-                        const canvas = document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-                        const ctx = canvas.getContext('2d'); const frames = [];
-                        const frameCount = videoDurationSetting === 1 ? 5 : (videoDurationSetting === 10 ? 48 : 24);
-                        const step = Math.min(video.duration, videoDurationSetting) / frameCount;
-                        for (let i = 0; i < frameCount; i++) {
-                            video.currentTime = i * step;
-                            await new Promise(res => { video.onseeked = res; setTimeout(res, 1000); });
-                            ctx.drawImage(video, 0, 0);
-                            const img = new Image(); await new Promise(r => { img.onload = r; img.src = canvas.toDataURL('image/png'); });
-                            frames.push({ id: Math.random().toString(36).substr(2, 9), url: img.src, img, width: img.width, height: img.height, name: `v_frame_${i}.png` });
-                        }
-                        URL.revokeObjectURL(video.src); setIsExtracting(false); setImages(frames);
-                    } catch (err) { setIsExtracting(false); }
+            const waitForVideoFrame = (video) => new Promise((resolve) => {
+                if (typeof video.requestVideoFrameCallback === 'function') {
+                    video.requestVideoFrameCallback(() => resolve());
+                } else {
+                    requestAnimationFrame(() => resolve());
+                }
+            });
+
+            const seekVideoToTime = (video, targetTime) => new Promise((resolve, reject) => {
+                const maxSeekTime = Math.max(0, (video.duration || 0) - VIDEO_SEEK_EPSILON_SEC);
+                const safeTargetTime = Math.max(0, Math.min(targetTime, maxSeekTime));
+
+                if (Math.abs(video.currentTime - safeTargetTime) <= VIDEO_SEEK_EPSILON_SEC) {
+                    waitForVideoFrame(video).then(resolve);
+                    return;
+                }
+
+                let settled = false;
+                const cleanup = () => {
+                    clearTimeout(timeoutId);
+                    video.removeEventListener('seeked', onSeeked);
+                    video.removeEventListener('error', onError);
                 };
+                const onSeeked = () => {
+                    if (settled) return;
+                    settled = true;
+                    cleanup();
+                    waitForVideoFrame(video).then(resolve);
+                };
+                const onError = () => {
+                    if (settled) return;
+                    settled = true;
+                    cleanup();
+                    reject(new Error('Video seek failed'));
+                };
+                const timeoutId = setTimeout(() => {
+                    if (settled) return;
+                    settled = true;
+                    cleanup();
+                    reject(new Error(`Video seek timed out at ${safeTargetTime.toFixed(3)}s`));
+                }, VIDEO_SEEK_TIMEOUT_MS);
+
+                video.addEventListener('seeked', onSeeked);
+                video.addEventListener('error', onError);
+                video.currentTime = safeTargetTime;
+            });
+
+            const getVideoExtractionPlan = (video, extractSettings) => {
+                const videoDuration = Math.max(0, video.duration || 0);
+                const startSec = clamp(Number(extractSettings.startSec) || 0, 0, videoDuration);
+                const availableDuration = Math.max(0, videoDuration - startSec);
+                const durationSec = extractSettings.useFullDuration
+                    ? availableDuration
+                    : clamp(Number(extractSettings.durationSec) || 0, 0.1, Math.max(0.1, availableDuration));
+                const extractionDuration = Math.max(0, Math.min(durationSec, availableDuration));
+                const extractionFps = clamp(Math.round(Number(extractSettings.fps) || DEFAULT_VIDEO_EXTRACTION_FPS), 1, 60);
+
+                if (!Number.isFinite(extractionDuration) || extractionDuration <= 0) {
+                    return {
+                        startSec,
+                        durationSec: 0,
+                        extractionFps,
+                        frameCount: 1,
+                        timestamps: [clamp(startSec, 0, Math.max(0, videoDuration - VIDEO_SEEK_EPSILON_SEC))]
+                    };
+                }
+
+                const frameCount = Math.max(1, Math.ceil(extractionDuration * extractionFps));
+                const maxCaptureTime = Math.max(0, startSec + extractionDuration - VIDEO_SEEK_EPSILON_SEC);
+                const timestamps = Array.from({ length: frameCount }, (_, index) => {
+                    const rawTime = startSec + index / extractionFps;
+                    return Math.min(rawTime, maxCaptureTime);
+                });
+
+                return {
+                    startSec,
+                    durationSec: extractionDuration,
+                    extractionFps,
+                    frameCount,
+                    timestamps
+                };
+            };
+
+            const extractVideoFrames = async (file, extractSettings = videoExtractSettings) => {
+                if (!file) return;
+
+                setImportSource('video');
+                setVideoFile(file);
+                setIsExtracting(true);
+                setCurrentFrame(0);
+
+                const video = document.createElement('video');
+                const objectUrl = URL.createObjectURL(file);
+                video.muted = true;
+                video.preload = "auto";
+                video.playsInline = true;
+
+                try {
+                    await new Promise((resolve, reject) => {
+                        video.onloadedmetadata = resolve;
+                        video.onerror = () => reject(new Error('Video metadata failed to load'));
+                        video.src = objectUrl;
+                    });
+
+                    video.pause();
+                    const nativeFps = (() => {
+                        if (!video.duration || !Number.isFinite(video.duration) || !video.duration) return null;
+                        const browserFrameEstimate = video.webkitDecodedFrameCount && video.webkitDecodedFrameCount > 0
+                            ? video.webkitDecodedFrameCount / video.duration
+                            : null;
+                        return browserFrameEstimate ? Number(browserFrameEstimate.toFixed(2)) : null;
+                    })();
+                    setVideoMeta({
+                        duration: video.duration || 0,
+                        width: video.videoWidth,
+                        height: video.videoHeight,
+                        name: file.name,
+                        nativeFps
+                    });
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) throw new Error('Canvas 2D context not available');
+                    const plan = getVideoExtractionPlan(video, extractSettings);
+                    const timestamps = plan.timestamps;
+                    const frames = [];
+
+                    for (let i = 0; i < timestamps.length; i++) {
+                        await seekVideoToTime(video, timestamps[i]);
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(video, 0, 0);
+
+                        const dataUrl = canvas.toDataURL('image/png');
+                        const img = new Image();
+                        await new Promise((resolve, reject) => {
+                            img.onload = resolve;
+                            img.onerror = () => reject(new Error('Extracted frame failed to load'));
+                            img.src = dataUrl;
+                        });
+
+                        frames.push({
+                            id: Math.random().toString(36).substr(2, 9),
+                            url: dataUrl,
+                            img,
+                            width: img.width,
+                            height: img.height,
+                            name: `v_frame_${i}.png`
+                        });
+                    }
+
+                    setImages(frames);
+                } catch (err) {
+                    console.error(err);
+                    showToast("❌ 视频提帧失败，请重试");
+                } finally {
+                    URL.revokeObjectURL(objectUrl);
+                    setIsExtracting(false);
+                }
+            };
+
+            const handleVideo = async (e, nextExtractSettings = videoExtractSettings) => {
+                const file = e?.target?.files?.[0];
+                if (!file) return;
+                await extractVideoFrames(file, nextExtractSettings);
+                if (e?.target) e.target.value = null;
             };
 
             // 导入雪碧图：跳出带辅助网格的实时预览模态框
@@ -348,8 +455,9 @@
                     }
                     setImages(frames);
                     setCurrentFrame(0);
-                    setImportSource('spritesheet'); // 设定为雪碧图来源，锁定GIF导出
+                    setImportSource('spritesheet'); // 标记来源为已切割雪碧图
                     setVideoFile(null);
+                    setVideoMeta(null);
                     setTempSpriteImage(null);
                     setIsExtracting(false);
                     showToast(`✅ 成功切割为 ${cols * rows} 帧`);
@@ -383,33 +491,427 @@
                 setIsPickingColor(false);
             };
 
+            const isTransparentPixel = (r, g, b, a) => {
+                if (a < trimSettings.alphaThreshold) return true;
+                if (transparentColor && !isPickingColor) {
+                    const tol = settings.tolerance;
+                    return Math.abs(r - transparentColor.r) <= tol
+                        && Math.abs(g - transparentColor.g) <= tol
+                        && Math.abs(b - transparentColor.b) <= tol;
+                }
+                return false;
+            };
+
+            const getFrameSourceRect = (imgObj) => {
+                if (!imgObj) return { sx: 0, sy: 0, sw: 1, sh: 1 };
+                if (!trimSettings.enabled) {
+                    return { sx: 0, sy: 0, sw: imgObj.width, sh: imgObj.height };
+                }
+
+                const cacheKey = `${imgObj.id}::${getTransparencySettingsKey()}`;
+                const cached = trimBoundsCacheRef.current.get(cacheKey);
+                if (cached) return cached;
+
+                const canvas = document.createElement('canvas');
+                canvas.width = imgObj.width;
+                canvas.height = imgObj.height;
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                if (!ctx) {
+                    const fallback = { sx: 0, sy: 0, sw: imgObj.width, sh: imgObj.height };
+                    trimBoundsCacheRef.current.set(cacheKey, fallback);
+                    return fallback;
+                }
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(imgObj.img, 0, 0);
+
+                const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                let minX = canvas.width;
+                let minY = canvas.height;
+                let maxX = -1;
+                let maxY = -1;
+
+                for (let y = 0; y < canvas.height; y++) {
+                    for (let x = 0; x < canvas.width; x++) {
+                        const idx = (y * canvas.width + x) * 4;
+                        if (!isTransparentPixel(data[idx], data[idx + 1], data[idx + 2], data[idx + 3])) {
+                            if (x < minX) minX = x;
+                            if (y < minY) minY = y;
+                            if (x > maxX) maxX = x;
+                            if (y > maxY) maxY = y;
+                        }
+                    }
+                }
+
+                if (maxX < minX || maxY < minY) {
+                    const fallback = { sx: 0, sy: 0, sw: imgObj.width, sh: imgObj.height };
+                    trimBoundsCacheRef.current.set(cacheKey, fallback);
+                    return fallback;
+                }
+
+                const padding = Math.max(0, Math.round(trimSettings.padding || 0));
+                const rect = {
+                    sx: Math.max(0, minX - padding),
+                    sy: Math.max(0, minY - padding),
+                    sw: Math.min(imgObj.width, maxX + padding + 1) - Math.max(0, minX - padding),
+                    sh: Math.min(imgObj.height, maxY + padding + 1) - Math.max(0, minY - padding)
+                };
+                trimBoundsCacheRef.current.set(cacheKey, rect);
+                return rect;
+            };
+
+            const buildFrameLayout = (frameList) => {
+                return buildFrameLayoutFor(frameList, false);
+            };
+
+            const buildFrameLayoutFor = (frameList, forExport = false) => {
+                const validImages = frameList.filter(i => i && i.img);
+                let frames = validImages.map((imgObj) => {
+                    const sourceRect = getFrameSourceRect(imgObj);
+                    const baseWidth = sourceRect.sw;
+                    const baseHeight = sourceRect.sh;
+                    const scale = forExport && exportSizing.mode === 'max-edge'
+                        ? Math.max(0.01, (Math.max(1, exportSizing.maxEdge) / Math.max(1, Math.max(baseWidth, baseHeight))))
+                        : 1;
+                    return {
+                        imgObj,
+                        sourceRect,
+                        baseWidth,
+                        baseHeight,
+                        scale,
+                        width: Math.max(1, Math.round(baseWidth * scale)),
+                        height: Math.max(1, Math.round(baseHeight * scale))
+                    };
+                });
+
+                if (forExport) {
+                    frames = dedupeFramesForExport(frames);
+                }
+
+                const cellWidth = frames.length > 0 ? Math.max(...frames.map(f => f.width)) : 0;
+                const cellHeight = frames.length > 0 ? Math.max(...frames.map(f => f.height)) : 0;
+                let columns = settings.columns > 0 ? settings.columns : Math.ceil(Math.sqrt(frames.length || 1));
+                if (columns === 0) columns = 4;
+                const rows = Math.max(1, Math.ceil((frames.length || 1) / Math.max(1, columns)));
+                const sheetWidth = columns * cellWidth + Math.max(0, columns - 1) * settings.padding;
+                const sheetHeight = rows * cellHeight + Math.max(0, rows - 1) * settings.padding;
+
+                return {
+                    frames,
+                    cellWidth,
+                    cellHeight,
+                    columns,
+                    rows,
+                    sheetWidth,
+                    sheetHeight
+                };
+            };
+
+            const applyTransparencyMask = (ctx, w, h, mode = 'alpha') => {
+                if (!transparentColor && mode !== 'gif') return;
+
+                const idata = ctx.getImageData(0, 0, w, h);
+                const d = idata.data;
+                const tc = transparentColor;
+                const tol = settings.tolerance;
+
+                for (let i = 0; i < d.length; i += 4) {
+                    let isTransparent = false;
+
+                    if (mode === 'gif' && d[i + 3] < 128) {
+                        isTransparent = true;
+                    } else if (tc && !isPickingColor) {
+                        if (Math.abs(d[i] - tc.r) <= tol && Math.abs(d[i + 1] - tc.g) <= tol && Math.abs(d[i + 2] - tc.b) <= tol) {
+                            isTransparent = true;
+                        }
+                    }
+
+                    if (mode === 'gif') {
+                        if (isTransparent) {
+                            d[i] = 0;
+                            d[i + 1] = 255;
+                            d[i + 2] = 0;
+                            d[i + 3] = 255;
+                        } else {
+                            d[i + 3] = 255;
+                            if (d[i] === 0 && d[i + 1] === 255 && d[i + 2] === 0) {
+                                d[i + 1] = 254;
+                            }
+                        }
+                    } else if (isTransparent) {
+                        d[i + 3] = 0;
+                    }
+                }
+
+                ctx.putImageData(idata, 0, 0);
+            };
+
+            const drawFrameToCanvas = (ctx, frame, canvasWidth, canvasHeight) => {
+                ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+                ctx.save();
+                ctx.filter = `saturate(${settings.saturation}%) hue-rotate(${settings.hue}deg)`;
+                const drawX = (canvasWidth - frame.width) / 2;
+                const drawY = (canvasHeight - frame.height) / 2;
+                if (isMirrored) {
+                    ctx.translate(canvasWidth, 0);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(
+                        frame.imgObj.img,
+                        frame.sourceRect.sx,
+                        frame.sourceRect.sy,
+                        frame.sourceRect.sw,
+                        frame.sourceRect.sh,
+                        canvasWidth - drawX - frame.width,
+                        drawY,
+                        frame.width,
+                        frame.height
+                    );
+                } else {
+                    ctx.drawImage(
+                        frame.imgObj.img,
+                        frame.sourceRect.sx,
+                        frame.sourceRect.sy,
+                        frame.sourceRect.sw,
+                        frame.sourceRect.sh,
+                        drawX,
+                        drawY,
+                        frame.width,
+                        frame.height
+                    );
+                }
+                ctx.restore();
+            };
+
+            const drawSheetToCanvas = (ctx, layout, canvasWidth) => {
+                ctx.clearRect(0, 0, layout.sheetWidth, layout.sheetHeight);
+                ctx.save();
+                ctx.filter = `saturate(${settings.saturation}%) hue-rotate(${settings.hue}deg)`;
+                if (isMirrored) { ctx.translate(canvasWidth, 0); ctx.scale(-1, 1); }
+                layout.frames.forEach((frame, idx) => {
+                    const col = idx % layout.columns;
+                    const row = Math.floor(idx / layout.columns);
+                    const drawX = col * (layout.cellWidth + settings.padding) + (layout.cellWidth - frame.width) / 2;
+                    const drawY = row * (layout.cellHeight + settings.padding) + (layout.cellHeight - frame.height) / 2;
+                    ctx.drawImage(
+                        frame.imgObj.img,
+                        frame.sourceRect.sx,
+                        frame.sourceRect.sy,
+                        frame.sourceRect.sw,
+                        frame.sourceRect.sh,
+                        drawX,
+                        drawY,
+                        frame.width,
+                        frame.height
+                    );
+                });
+                ctx.restore();
+            };
+
+            const createSheetCanvas = (layout) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = layout.sheetWidth;
+                canvas.height = layout.sheetHeight;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) throw new Error('Canvas 2D context not available');
+                drawSheetToCanvas(ctx, layout, layout.sheetWidth);
+                if (transparentColor && !isPickingColor) {
+                    applyTransparencyMask(ctx, layout.sheetWidth, layout.sheetHeight, 'alpha');
+                }
+                return canvas;
+            };
+
+            const generateGifBlob = async (layout) => {
+                if (!window.GIF) throw new Error('GIF engine not ready');
+
+                const exportW = Math.max(1, Math.round(layout.cellWidth));
+                const exportH = Math.max(1, Math.round(layout.cellHeight));
+                const workerRes = await fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js');
+                if (!workerRes.ok) throw new Error("Worker fetch failed");
+                const workerText = await workerRes.text();
+                const workerBlob = new Blob([workerText], { type: 'application/javascript' });
+                const workerUrl = URL.createObjectURL(workerBlob);
+
+                return await new Promise((resolve, reject) => {
+                    try {
+                        const gif = new window.GIF({
+                            workers: 4,
+                            quality: 10,
+                            width: exportW,
+                            height: exportH,
+                            workerScript: workerUrl,
+                            transparent: 0x00FF00
+                        });
+
+                        const c = document.createElement('canvas');
+                        c.width = exportW;
+                        c.height = exportH;
+                        const ctx = c.getContext('2d', { willReadFrequently: true });
+                        if (!ctx) throw new Error('Canvas 2D context not available');
+
+                        layout.frames.forEach((frame) => {
+                            drawFrameToCanvas(ctx, frame, exportW, exportH);
+                            applyTransparencyMask(ctx, exportW, exportH, 'gif');
+                            gif.addFrame(c, { copy: true, delay: Math.max(10, Math.round(1000 / settings.fps)) });
+                        });
+
+                        gif.on('finished', function(blob) {
+                            URL.revokeObjectURL(workerUrl);
+                            resolve(blob);
+                        });
+                        gif.on('abort', function() {
+                            URL.revokeObjectURL(workerUrl);
+                            reject(new Error('GIF export aborted'));
+                        });
+
+                        gif.render();
+                    } catch (error) {
+                        URL.revokeObjectURL(workerUrl);
+                        reject(error);
+                    }
+                });
+            };
+
+            const generateSheetExport = async (mode = exportMode) => {
+                const layout = buildFrameLayoutFor(images, true);
+                if (mode === 'gif') {
+                    const blob = await generateGifBlob(layout);
+                    return {
+                        blob,
+                        layout,
+                        extension: 'gif',
+                        filename: `${getExportBaseName()}_sheet.gif`
+                    };
+                }
+
+                const isWebP = mode === 'sheet-webp';
+                const mime = isWebP ? 'image/webp' : 'image/png';
+                const extension = isWebP ? 'webp' : 'png';
+                const canvas = createSheetCanvas(layout);
+                const blob = await canvasToBlobAsync(
+                    canvas,
+                    mime,
+                    isWebP ? clamp(webpQuality / 100, 0.1, 1) : undefined
+                );
+
+                return {
+                    blob,
+                    layout,
+                    extension,
+                    filename: `${getExportBaseName()}_sheet.${extension}`
+                };
+            };
+
+            const canvasToBlobAsync = (canvas, mime, quality) => new Promise((resolve, reject) => {
+                canvas.toBlob((blob) => {
+                    if (blob) resolve(blob);
+                    else reject(new Error(`Failed to encode canvas as ${mime}`));
+                }, mime, quality);
+            });
+
+            const exportBlobDownload = (blob, filename) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            };
+
+            const getExportBaseName = () => {
+                const raw = videoMeta?.name || 'sprite_asset';
+                const normalized = raw.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_-]+/g, '_');
+                return normalized || 'sprite_asset';
+            };
+
+            const getFrameSignature = (frame) => {
+                const sampleSize = Math.max(4, Math.round(dedupeSettings.sampleSize || 16));
+                const cacheKey = `${frame.imgObj.id}::${frame.sourceRect.sx},${frame.sourceRect.sy},${frame.sourceRect.sw},${frame.sourceRect.sh}::${getSignatureSettingsKey()}`;
+                const cached = frameSignatureCacheRef.current.get(cacheKey);
+                if (cached) return cached;
+
+                const canvas = document.createElement('canvas');
+                canvas.width = sampleSize;
+                canvas.height = sampleSize;
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                if (!ctx) {
+                    const fallback = new Uint8ClampedArray(sampleSize * sampleSize * 4);
+                    frameSignatureCacheRef.current.set(cacheKey, fallback);
+                    return fallback;
+                }
+
+                drawFrameToCanvas(ctx, frame, sampleSize, sampleSize);
+                applyTransparencyMask(ctx, sampleSize, sampleSize, 'alpha');
+                const signature = ctx.getImageData(0, 0, sampleSize, sampleSize).data;
+                frameSignatureCacheRef.current.set(cacheKey, signature);
+                return signature;
+            };
+
+            const getSignatureDifference = (a, b) => {
+                if (!a || !b || a.length !== b.length) return Number.POSITIVE_INFINITY;
+                let total = 0;
+                for (let i = 0; i < a.length; i++) {
+                    total += Math.abs(a[i] - b[i]);
+                }
+                return total / a.length;
+            };
+
+            const dedupeFramesForExport = (frames) => {
+                if (!dedupeSettings.enabled || frames.length <= 1) return frames;
+
+                const kept = [];
+                let lastSignature = null;
+                const threshold = Math.max(0, dedupeSettings.threshold || 0);
+
+                frames.forEach((frame) => {
+                    const signature = getFrameSignature(frame);
+                    if (!lastSignature) {
+                        kept.push(frame);
+                        lastSignature = signature;
+                        return;
+                    }
+
+                    const diff = getSignatureDifference(lastSignature, signature);
+                    if (diff > threshold) {
+                        kept.push(frame);
+                        lastSignature = signature;
+                    }
+                });
+
+                return kept.length > 0 ? kept : frames.slice(0, 1);
+            };
+
             const drawCore = (ctx, w, h, isSheet) => {
                 if (images.length === 0) return;
                 ctx.clearRect(0, 0, w, h);
-                ctx.save();
-                ctx.filter = `saturate(${settings.saturation}%) hue-rotate(${settings.hue}deg)`;
-                if (isMirrored) { ctx.translate(w, 0); ctx.scale(-1, 1); }
                 if (isSheet) {
-                    const valid = images.filter(i => i && i.img);
-                    if (valid.length === 0) return;
-                    const mw = Math.max(...valid.map(i => i.width)); const mh = Math.max(...valid.map(i => i.height));
-                    let cols = settings.columns > 0 ? settings.columns : Math.ceil(Math.sqrt(valid.length));
-                    if (cols === 0) cols = 4;
-                    valid.forEach((imgObj, idx) => {
-                        const col = idx % cols; const row = Math.floor(idx / cols);
-                        ctx.drawImage(imgObj.img, col*(mw+settings.padding) + (mw-imgObj.width)/2, row*(mh+settings.padding) + (mh-imgObj.height)/2);
-                    });
+                    const layout = buildFrameLayout(images);
+                    if (layout.frames.length === 0) return;
+                    drawSheetToCanvas(ctx, layout, w);
                 } else {
+                    ctx.save();
+                    ctx.filter = `saturate(${settings.saturation}%) hue-rotate(${settings.hue}deg)`;
+                    if (isMirrored) { ctx.translate(w, 0); ctx.scale(-1, 1); }
                     const target = images[currentFrame] || images[0];
-                    if (target && target.img) ctx.drawImage(target.img, 0, 0);
+                    if (target && target.img) {
+                        const rect = getFrameSourceRect(target);
+                        ctx.drawImage(
+                            target.img,
+                            rect.sx,
+                            rect.sy,
+                            rect.sw,
+                            rect.sh,
+                            0,
+                            0,
+                            rect.sw,
+                            rect.sh
+                        );
+                    }
+                    ctx.restore();
                 }
-                ctx.restore();
                 
                 // 实时处理透明逻辑
                 if (transparentColor && !isPickingColor) {
-                    const idata = ctx.getImageData(0, 0, w, h); const d = idata.data; const {r,g,b} = transparentColor; const tol = settings.tolerance;
-                    for (let i=0; i<d.length; i+=4) if (Math.abs(d[i]-r)<=tol && Math.abs(d[i+1]-g)<=tol && Math.abs(d[i+2]-b)<=tol) d[i+3]=0;
-                    ctx.putImageData(idata, 0, 0);
+                    applyTransparencyMask(ctx, w, h, 'alpha');
                 }
             };
 
@@ -417,19 +919,20 @@
                 if (!canvasRef.current || images.length === 0) { setCanvasSize({ width: 0, height: 0 }); return; }
                 const canvas = canvasRef.current;
                 if (previewMode === 'sheet') {
-                    const mw = Math.max(...images.map(i => i.width)); const mh = Math.max(...images.map(i => i.height));
-                    let cols = settings.columns > 0 ? settings.columns : Math.ceil(Math.sqrt(images.length));
-                    if (cols === 0) cols = 4;
-                    const w = cols * mw + (cols - 1) * settings.padding;
-                    const h = Math.ceil(images.length / cols) * mh + (Math.ceil(images.length / cols) - 1) * settings.padding;
+                    const layout = buildFrameLayout(images);
+                    const w = layout.sheetWidth;
+                    const h = layout.sheetHeight;
                     canvas.width = w; canvas.height = h; setCanvasSize({ width: w, height: h });
                     drawCore(canvas.getContext('2d'), w, h, true);
                 } else {
                     const f = images[currentFrame] || images[0]; if (!f) return;
-                    canvas.width = f.width; canvas.height = f.height; setCanvasSize({ width: f.width, height: f.height });
-                    drawCore(canvas.getContext('2d'), f.width, f.height, false);
+                    const rect = getFrameSourceRect(f);
+                    canvas.width = rect.sw;
+                    canvas.height = rect.sh;
+                    setCanvasSize({ width: rect.sw, height: rect.sh });
+                    drawCore(canvas.getContext('2d'), rect.sw, rect.sh, false);
                 }
-            }, [images, settings, transparentColor, isPickingColor, previewMode, currentFrame, isMirrored, importSource]);
+            }, [images, settings, transparentColor, isPickingColor, previewMode, currentFrame, isMirrored, importSource, trimSettings]);
 
             useEffect(() => { updateCanvas(); }, [updateCanvas]);
 
@@ -439,136 +942,227 @@
                 return () => clearInterval(itv);
             }, [images.length, settings.fps, isPlaying]);
 
-            // 【终极重构】完美的透明单帧GIF 与 合并雪碧大图 导出逻辑
+            const getSequenceExportFormatForMode = (mode = exportMode) => (
+                mode === 'sheet-webp' ? 'webp' : 'png'
+            );
+
+            const generateFrameSequenceExport = async (format = 'png') => {
+                const isWebP = format === 'webp';
+                const mime = isWebP ? 'image/webp' : 'image/png';
+                const ext = isWebP ? 'webp' : 'png';
+                const layout = buildFrameLayoutFor(images, true);
+                const baseName = getExportBaseName();
+                const files = [];
+
+                for (let index = 0; index < layout.frames.length; index++) {
+                    const frame = layout.frames[index];
+                    const canvas = document.createElement('canvas');
+                    canvas.width = frame.width;
+                    canvas.height = frame.height;
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) throw new Error('Canvas 2D context not available');
+
+                    drawFrameToCanvas(ctx, frame, frame.width, frame.height);
+                    applyTransparencyMask(ctx, frame.width, frame.height, 'alpha');
+
+                    const blob = await canvasToBlobAsync(
+                        canvas,
+                        mime,
+                        isWebP ? clamp(webpQuality / 100, 0.1, 1) : undefined
+                    );
+
+                    files.push({
+                        index,
+                        frame,
+                        blob,
+                        filename: `${baseName}_frame_${String(index).padStart(3, '0')}.${ext}`
+                    });
+                }
+
+                return {
+                    layout,
+                    files,
+                    extension: ext
+                };
+            };
+
             const handleExport = async () => {
-                if (images.length === 0) return;
-                const isExportingGif = importSource === 'spritesheet';
+                if (images.length === 0 || isExtracting) return;
+                const exportLabel = exportMode === 'gif'
+                    ? 'GIF'
+                    : (exportMode === 'sheet-webp' ? 'WebP Sheet' : 'PNG Sheet');
 
-                if (isExportingGif) {
-                    if (!window.GIF) { showToast("❌ GIF 引擎未就绪，请刷新重试"); return; }
-                    setIsExtracting(true);
-                    showToast("⏳ 极速生成透明纯净 GIF 中...");
+                setIsExtracting(true);
+                showToast(`⏳ 导出 ${exportLabel} 中...`);
 
-                    try {
-                        const validImages = images.filter(i => i && i.img);
-                        
-                        // 【强制取整】防止 gif.js 底层报 Value is not of type 'long'
-                        const exportW = Math.max(1, Math.round(validImages[0].width));
-                        const exportH = Math.max(1, Math.round(validImages[0].height));
-
-                        // 异步获取 worker 避免跨域
-                        const workerRes = await fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js');
-                        if (!workerRes.ok) throw new Error("Worker fetch failed");
-                        const workerText = await workerRes.text();
-                        const workerBlob = new Blob([workerText], { type: 'application/javascript' });
-                        const workerUrl = URL.createObjectURL(workerBlob);
-
-                        const gif = new window.GIF({
-                            workers: 4,
-                            quality: 10, // 画质10即可保持速度与视觉的完美平衡
-                            width: exportW,
-                            height: exportH,
-                            workerScript: workerUrl,
-                            transparent: 0x00FF00 // 【核心修复】必须传数字类型！这就是让 gif.js 正确透明抠像的钥匙
-                        });
-
-                        const c = document.createElement('canvas');
-                        c.width = exportW;
-                        c.height = exportH;
-                        const ctx = c.getContext('2d', { willReadFrequently: true });
-
-                        validImages.forEach((imgObj) => {
-                            // 1. 完全清空当前帧，绝对不要预先铺绿幕底色！
-                            ctx.clearRect(0, 0, exportW, exportH);
-
-                            // 2. 绘制原图 (带有原生的透明通道)
-                            ctx.save();
-                            ctx.filter = `saturate(${settings.saturation}%) hue-rotate(${settings.hue}deg)`;
-                            if (isMirrored) {
-                                ctx.translate(exportW, 0);
-                                ctx.scale(-1, 1);
-                            }
-                            ctx.drawImage(imgObj.img, 0, 0, exportW, exportH);
-                            ctx.restore();
-
-                            // 3. 【防黑圈抠像算法】直接读取像素，手动制作完美的绿幕遮罩
-                            const idata = ctx.getImageData(0, 0, exportW, exportH);
-                            const d = idata.data;
-                            const tc = transparentColor;
-                            const tol = settings.tolerance;
-
-                            for (let i = 0; i < d.length; i += 4) {
-                                let isTransparent = false;
-                                
-                                // 原图里透明度过低的像素，或者是被用户吸管点掉的像素
-                                if (d[i+3] < 128) {
-                                    isTransparent = true;
-                                } else if (tc && !isPickingColor) {
-                                    if (Math.abs(d[i]-tc.r)<=tol && Math.abs(d[i+1]-tc.g)<=tol && Math.abs(d[i+2]-tc.b)<=tol) {
-                                        isTransparent = true;
-                                    }
-                                }
-
-                                if (isTransparent) {
-                                    // 给它涂上纯绿色，并强行变实（Alpha = 255）给 gif.js 引擎挖空
-                                    d[i] = 0; 
-                                    d[i+1] = 255; 
-                                    d[i+2] = 0; 
-                                    d[i+3] = 255; 
-                                } else {
-                                    // 如果像素本身是不透明的，为了防止半透明黑边，我们直接把Alpha推满
-                                    d[i+3] = 255;
-                                    // 防穿孔保护：如果原图刚好有一个完美的极限绿像素，稍微弄暗一点点
-                                    if (d[i] === 0 && d[i+1] === 255 && d[i+2] === 0) {
-                                        d[i+1] = 254; 
-                                    }
-                                }
-                            }
-                            ctx.putImageData(idata, 0, 0);
-
-                            gif.addFrame(c, { copy: true, delay: Math.max(10, Math.round(1000 / settings.fps)) });
-                        });
-
-                        gif.on('finished', function(blob) {
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `gbg_transparent_anim_${Date.now()}.gif`;
-                            a.click();
-                            URL.revokeObjectURL(url);
-                            URL.revokeObjectURL(workerUrl);
-                            setIsExtracting(false);
-                            showToast("✅ 无背景纯净透明 GIF 导出成功！");
-                        });
-
-                        gif.on('abort', function() {
-                            setIsExtracting(false);
-                            showToast("❌ 导出被中断");
-                        });
-
-                        gif.render();
-                    } catch (error) {
-                        console.error(error);
-                        setIsExtracting(false);
-                        showToast("❌ GIF 引擎加载失败，请检查网络");
-                    }
-                } else {
-                    const tmp = document.createElement('canvas');
-                    const mw = Math.max(...images.map(i => i.width)); const mh = Math.max(...images.map(i => i.height));
-                    let cols = settings.columns > 0 ? settings.columns : Math.ceil(Math.sqrt(images.length));
-                    if (cols === 0) cols = 4;
-                    const w = cols * mw + (cols - 1) * settings.padding;
-                    const h = Math.ceil(images.length / cols) * mh + (Math.ceil(images.length / cols) - 1) * settings.padding;
-                    tmp.width = w; tmp.height = h;
-                    drawCore(tmp.getContext('2d'), w, h, true);
-                    const a = document.createElement('a'); a.download=`sprite_sheet_${Date.now()}.png`; a.href=tmp.toDataURL('image/png'); a.click();
-                    showToast("✅ 完美 PNG 雪碧大图导出成功！");
+                try {
+                    const result = await generateSheetExport(exportMode);
+                    exportBlobDownload(result.blob, result.filename);
+                    showToast(`✅ ${exportLabel} 导出成功！`);
+                } catch (error) {
+                    console.error(error);
+                    showToast(`❌ ${exportLabel} 导出失败，请重试`);
+                } finally {
+                    setIsExtracting(false);
                 }
             };
 
+            const handleExportSequence = async (format = 'png') => {
+                if (images.length === 0 || isExtracting) return;
+                const isWebP = format === 'webp';
+
+                setIsExtracting(true);
+                showToast(isWebP ? "⏳ 批量导出 WebP 帧中..." : "⏳ 批量导出 PNG 帧中...");
+
+                try {
+                    const sequenceExport = await generateFrameSequenceExport(format);
+
+                    for (const file of sequenceExport.files) {
+                        exportBlobDownload(file.blob, file.filename);
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    }
+
+                    showToast(isWebP ? "✅ WebP 帧序列导出完成！" : "✅ PNG 帧序列导出完成！");
+                } catch (error) {
+                    console.error(error);
+                    showToast("❌ 批量导出帧失败，请重试");
+                } finally {
+                    setIsExtracting(false);
+                }
+            };
+
+            const handleExportZip = async () => {
+                if (images.length === 0 || isExtracting) return;
+                if (!window.JSZip) {
+                    showToast("❌ ZIP 引擎未就绪，请刷新重试");
+                    return;
+                }
+
+                setIsExtracting(true);
+                showToast("⏳ 打包 ZIP 中...");
+
+                try {
+                    const baseName = getExportBaseName();
+                    const zip = new window.JSZip();
+                    const sheetExport = await generateSheetExport(exportMode);
+                    const sequenceFormat = getSequenceExportFormatForMode(exportMode);
+                    const sequenceExport = await generateFrameSequenceExport(sequenceFormat);
+                    const metadata = buildExportMetadata(sheetExport.layout);
+
+                    zip.file(sheetExport.filename, sheetExport.blob);
+                    zip.file(`${baseName}_metadata.json`, JSON.stringify(metadata, null, 2));
+                    sequenceExport.files.forEach((file) => {
+                        zip.file(`frames/${file.filename}`, file.blob);
+                    });
+
+                    const zipBlob = await zip.generateAsync({
+                        type: 'blob',
+                        compression: 'DEFLATE',
+                        compressionOptions: { level: 6 }
+                    });
+
+                    exportBlobDownload(zipBlob, `${baseName}_bundle.zip`);
+                    showToast("✅ ZIP 打包导出成功！");
+                } catch (error) {
+                    console.error(error);
+                    showToast("❌ ZIP 打包失败，请重试");
+                } finally {
+                    setIsExtracting(false);
+                }
+            };
+
+            const buildExportMetadata = (layoutOverride = null) => {
+                const layout = layoutOverride || buildFrameLayoutFor(images, true);
+                const validImages = layout.frames;
+                const sourceFrameCount = images.filter(i => i && i.img).length;
+                const removedFrameCount = Math.max(0, sourceFrameCount - validImages.length);
+
+                return {
+                    generatedAt: new Date().toISOString(),
+                    importSource,
+                    sourceFrameCount,
+                    frameCount: validImages.length,
+                    removedFrameCount,
+                    exportMode,
+                    maxFrameWidth: layout.cellWidth,
+                    maxFrameHeight: layout.cellHeight,
+                    columns: layout.columns,
+                    rows: layout.rows,
+                    padding: settings.padding,
+                    previewFps: settings.fps,
+                    sheetWidth: layout.sheetWidth,
+                    sheetHeight: layout.sheetHeight,
+                    mirrored: isMirrored,
+                    trim: {
+                        enabled: trimSettings.enabled,
+                        padding: trimSettings.padding,
+                        alphaThreshold: trimSettings.alphaThreshold
+                    },
+                    dedupe: {
+                        enabled: dedupeSettings.enabled,
+                        threshold: dedupeSettings.threshold,
+                        sampleSize: dedupeSettings.sampleSize,
+                        removedFrames: removedFrameCount
+                    },
+                    exportSizing,
+                    webpQuality: exportMode === 'sheet-webp' ? webpQuality : null,
+                    sequenceFormat: getSequenceExportFormatForMode(exportMode),
+                    colorAdjustments: {
+                        saturation: settings.saturation,
+                        hue: settings.hue
+                    },
+                    transparency: transparentColor ? {
+                        color: transparentColor,
+                        tolerance: settings.tolerance
+                    } : null,
+                    sequence: validImages.map((frame, index) => ({
+                        index,
+                        name: frame.imgObj.name,
+                        width: frame.width,
+                        height: frame.height,
+                        sourceRect: frame.sourceRect
+                    })),
+                    sourceVideo: videoMeta ? {
+                        name: videoMeta.name,
+                        width: videoMeta.width,
+                        height: videoMeta.height,
+                        duration: videoMeta.duration,
+                        nativeFps: videoMeta.nativeFps
+                    } : null,
+                    extraction: importSource === 'video' && videoMeta ? {
+                        startSec: videoExtractSettings.startSec,
+                        durationSec: videoExtractSettings.useFullDuration
+                            ? Math.max(0, videoMeta.duration - videoExtractSettings.startSec)
+                            : videoExtractSettings.durationSec,
+                        fps: videoExtractSettings.fps,
+                        useFullDuration: videoExtractSettings.useFullDuration
+                    } : null
+                };
+            };
+
+            const handleExportMetadata = () => {
+                if (images.length === 0) return;
+                const metadata = buildExportMetadata();
+                const blob = new Blob([JSON.stringify(metadata, null, 2)], { type: 'application/json' });
+                exportBlobDownload(blob, `${getExportBaseName()}_metadata.json`);
+                showToast("✅ 元数据 JSON 导出成功！");
+            };
+
+            const rerunVideoExtraction = async (overrides = {}) => {
+                if (!videoFile || isExtracting) return;
+                const nextSettings = { ...videoExtractSettings, ...overrides };
+                setVideoExtractSettings(nextSettings);
+                await extractVideoFrames(videoFile, nextSettings);
+            };
+
             const handleDurationChange = (val) => {
-                setVideoDurationSetting(val);
-                if (videoFile) handleVideo({ target: { files: [videoFile] } });
+                const nextSettings = {
+                    ...videoExtractSettings,
+                    durationSec: val,
+                    useFullDuration: false
+                };
+                setVideoExtractSettings(nextSettings);
+                if (videoFile) extractVideoFrames(videoFile, nextSettings);
             };
 
             const handleToleranceChange = (v) => {
@@ -584,7 +1178,17 @@
                 });
             };
 
-            const clearAll = () => { setImages([]); setTransparentColor(null); setVideoFile(null); setOriginalSpriteSheet(null); setCurrentFrame(0); setImportSource('image'); };
+            const clearAll = () => {
+                setImages([]);
+                setTransparentColor(null);
+                setVideoFile(null);
+                setVideoMeta(null);
+                setCurrentFrame(0);
+                setExportMode('sheet-png');
+                setImportSource('image');
+                setTempSpriteImage(null);
+                setShowSpriteModal(false);
+            };
 
             const moveImage = (idx, dir) => {
                 const newI = [...images];
@@ -603,14 +1207,14 @@
                 </div>
             );
 
-            const isExportingGifBtn = importSource === 'spritesheet';
+            const isExportingGifBtn = exportMode === 'gif';
+            const extractionPreview = videoMeta ? getVideoExtractionPlan(videoMeta, videoExtractSettings) : null;
 
             return (
                 <div className="h-[100dvh] flex flex-col items-center justify-center p-4 text-gray-900 bg-gray-100">
                     <input type="file" ref={fileInputRef} onChange={e=>handleFiles(e.target.files)} accept="image/*" multiple className="hidden" />
                     <input type="file" ref={videoInputRef} onChange={handleVideo} accept="video/*" className="hidden" />
                     <input type="file" ref={spriteSheetInputRef} onChange={handleSpriteSheet} accept="image/*" className="hidden" />
-                    <input type="file" ref={uiRuleInputRef} onChange={handleUploadUIRules} accept=".json" className="hidden" />
 
                     {/* 全局 Toast 提示 - 绝对无阴影无边框 */}
                     {toastMessage && (
@@ -671,62 +1275,26 @@
                         </div>
                     )}
 
-                    {/* 捐赠模态框 */}
-                    {showDonationModal && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={()=>setShowDonationModal(false)}>
-                            <div className="bg-white p-10 max-w-2xl w-full relative flex flex-col items-center animate-pop-in rounded-[32px]" onClick={e=>e.stopPropagation()}>
-                                <button onClick={()=>setShowDonationModal(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 p-2 transition-all"><Icons.Close size={24}/></button>
-                                <h2 className="text-2xl font-black mb-2 mt-4 tracking-tight text-center">请我喝杯咖啡 ☕️</h2>
-                                <p className="text-sm font-bold text-gray-400 mb-10 tracking-widest uppercase text-center">感谢支持独立开发</p>
-                                <div className="flex gap-8 w-full justify-center text-center">
-                                    <div className="flex flex-col items-center bg-gray-50 border-none p-6 rounded-[24px] w-[240px]">
-                                        <div className="w-full aspect-square bg-white rounded-[20px] overflow-hidden mb-4 flex items-center justify-center"><img src="others/wechatpay.jpg" className="max-w-full h-full object-cover" alt="wechat" /></div>
-                                        <span className="text-sm font-black text-[#07c160] tracking-widest uppercase">微信支付</span>
-                                    </div>
-                                    <div className="flex flex-col items-center bg-gray-50 border-none p-6 rounded-[24px] w-[240px]">
-                                        <div className="w-full aspect-square bg-white rounded-[20px] overflow-hidden mb-4 flex items-center justify-center"><img src="others/alipay.jpg" className="max-w-full h-full object-cover" alt="alipay" /></div>
-                                        <span className="text-sm font-black text-[#1677ff] tracking-widest uppercase">支付宝</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
                     <div className="w-[95vw] max-w-[1400px] flex flex-col gap-4 h-full max-h-[900px] animate-pop-in">
                         <header className="bg-white py-3 px-6 rounded-full flex items-center justify-between z-20 shrink-0 border-none">
                             <div className="flex items-center gap-5 text-left">
-                                <div className="relative">
-                                    <img src="others/xieyoujune.jpg" alt="Avatar" className="w-11 h-11 object-cover rounded-full cursor-pointer hover:scale-105 transition-transform" onError={e=>e.target.src=DefaultAvatar} onClick={handleAvatarClick} />
-                                    {showUIMenu && (
-                                        <>
-                                            <div className="fixed inset-0 z-40" onClick={() => setShowUIMenu(false)}></div>
-                                            <div className="absolute top-[56px] left-0 w-[170px] bg-gray-100 p-2 z-50 animate-pop-in flex flex-col gap-1 rounded-[24px]">
-                                                <button onClick={() => uiRuleInputRef.current?.click()} className="flex items-center gap-3 px-4 py-3 text-[11px] font-black text-gray-500 hover:text-gray-900 hover:bg-white rounded-[18px] transition-all w-full text-left uppercase tracking-widest border-none"><Icons.Upload size={14} /> 导入规则</button>
-                                                <button onClick={handleDownloadUIRules} className="flex items-center gap-3 px-4 py-3 text-[11px] font-black text-gray-500 hover:text-gray-900 hover:bg-white rounded-[18px] transition-all w-full text-left uppercase tracking-widest border-none"><Icons.Download size={14} /> 导出规则</button>
-                                            </div>
-                                        </>
-                                    )}
+                                <div className="w-11 h-11 bg-gray-100 rounded-[14px] flex items-center justify-center overflow-hidden shrink-0">
+                                    <img src="others/icon.png" alt={APP_NAME} className="w-9 h-9 object-contain" />
                                 </div>
                                 <div className="flex flex-col text-left">
-                                    <span className="text-xl font-black tracking-tight leading-none text-gray-900">@谢有君</span>
-                                    <div className="flex items-center gap-2 mt-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 leading-none">
-                                        <a href="https://music.163.com/#/artist?id=1184020" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600 transition-colors">独立音乐人</a>
-                                        <span className="text-gray-200">/</span>
-                                        <a href="https://www.xiaohongshu.com/user/profile/63cac1130000000026006f9a" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600 transition-colors">《人生之旅》游戏开发者</a>
-                                    </div>
-                                </div>
-                                <div className="h-8 w-px bg-gray-100 mx-2" />
-                                <div className="flex flex-col text-left">
-                                    <h1 className="text-xl font-black tracking-tight text-gray-900 leading-none uppercase">GBG 精灵图实验室</h1>
-                                    <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mt-1.5 leading-none">Sprite Sheet Maker</p>
+                                    <h1 className="text-xl font-black tracking-tight text-gray-900 leading-none uppercase">{APP_NAME}</h1>
+                                    <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mt-1.5 leading-none">{APP_TAGLINE}</p>
                                 </div>
                             </div>
                             <div className="flex gap-2">
                                 <button onClick={()=>fileInputRef.current.click()} className="px-7 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-black uppercase tracking-widest rounded-full transition-all border-none">上传</button>
                                 <button onClick={handleExport} disabled={images.length===0 || isExtracting} className={`px-7 py-2.5 ${isExtracting ? 'bg-gray-400 cursor-wait' : 'bg-[#b0b3b8] hover:bg-gray-500'} text-white text-sm font-black uppercase tracking-widest rounded-full transition-all active:scale-95 disabled:opacity-30 border-none`}>
-                                    {isExtracting ? '处理中...' : (isExportingGifBtn ? '导出透明 GIF' : '导出合并大图')}
+                                    {isExtracting ? '处理中...' : (exportMode === 'gif' ? '导出 GIF' : (exportMode === 'sheet-webp' ? '导出 WebP Sheet' : '导出 PNG Sheet'))}
                                 </button>
-                                <button onClick={()=>setShowDonationModal(true)} className="px-4 py-2.5 bg-gray-100 text-gray-800 rounded-full btn-coffee-lab transition-all border-none"><Icons.Coffee /></button>
+                                <button onClick={handleExportZip} disabled={images.length===0 || isExtracting} className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-black uppercase tracking-widest rounded-full transition-all active:scale-95 disabled:opacity-30 border-none">导出 ZIP</button>
+                                <button onClick={() => handleExportSequence('png')} disabled={images.length===0 || isExtracting} className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-black uppercase tracking-widest rounded-full transition-all active:scale-95 disabled:opacity-30 border-none">导出帧 PNG</button>
+                                <button onClick={() => handleExportSequence('webp')} disabled={images.length===0 || isExtracting} className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-black uppercase tracking-widest rounded-full transition-all active:scale-95 disabled:opacity-30 border-none">导出帧 WebP</button>
+                                <button onClick={handleExportMetadata} disabled={images.length===0 || isExtracting} className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-black uppercase tracking-widest rounded-full transition-all active:scale-95 disabled:opacity-30 border-none">导出 JSON</button>
                             </div>
                         </header>
 
@@ -751,16 +1319,108 @@
                                         <Slider label="饱和度 / Saturation" value={settings.saturation} min={0} max={200} onChange={v=>setSettings({...settings, saturation:v})} suffix="%" />
                                         <Slider label="色相 / Hue" value={settings.hue} min={0} max={360} onChange={v=>setSettings({...settings, hue:v})} suffix="°" />
                                     </div>
+                                    <div className="flex flex-col gap-2 pt-2 shrink-0 border-t border-gray-200/50">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-left">导出模式 / Export</p>
+                                        <div className="flex bg-gray-200/50 p-1 rounded-full gap-1">
+                                            <button onClick={() => setExportMode('sheet-png')} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${exportMode==='sheet-png'?'bg-white text-gray-900':'text-gray-500 hover:text-gray-100'}`}>PNG</button>
+                                            <button onClick={() => setExportMode('sheet-webp')} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${exportMode==='sheet-webp'?'bg-white text-gray-900':'text-gray-500 hover:text-gray-100'}`}>WebP</button>
+                                            <button onClick={() => setExportMode('gif')} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${exportMode==='gif'?'bg-white text-gray-900':'text-gray-500 hover:text-gray-100'}`}>GIF</button>
+                                        </div>
+                                        {exportMode === 'sheet-webp' && (
+                                            <Slider label="WebP 质量 / Quality" value={webpQuality} min={50} max={100} onChange={setWebpQuality} suffix="%" />
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col gap-2 pt-2 shrink-0 border-t border-gray-200/50">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-left">导出尺寸 / Export Size</p>
+                                        <div className="flex bg-gray-200/50 p-1 rounded-full gap-1">
+                                            <button onClick={() => setExportSizing({ ...exportSizing, mode: 'original' })} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${exportSizing.mode==='original'?'bg-white text-gray-900':'text-gray-500 hover:text-gray-100'}`}>Original</button>
+                                            <button onClick={() => setExportSizing({ ...exportSizing, mode: 'max-edge' })} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${exportSizing.mode==='max-edge'?'bg-white text-gray-900':'text-gray-500 hover:text-gray-100'}`}>Max Edge</button>
+                                        </div>
+                                        {exportSizing.mode === 'max-edge' && (
+                                            <Slider label="最长边 / Max Edge" value={exportSizing.maxEdge} min={16} max={512} onChange={v=>setExportSizing({...exportSizing, maxEdge:v})} suffix="PX" />
+                                        )}
+                                    </div>
                                     {videoFile && (
-                                        <div className="flex flex-col gap-2 pt-2 shrink-0 border-t border-gray-200/50">
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-left">视频提取时间</p>
-                                            <div className="flex bg-gray-200/50 p-1 rounded-full gap-1">
-                                                {[1,5,10].map(v=>(
-                                                    <button key={v} onClick={()=>handleDurationChange(v)} disabled={isExtracting} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${videoDurationSetting===v?'bg-white text-gray-900':'text-gray-500 hover:text-gray-100'}`}>{v}S</button>
-                                                ))}
+                                        <div className="flex flex-col gap-3 pt-2 shrink-0 border-t border-gray-200/50">
+                                            <div className="flex justify-between items-center">
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-left">视频提取 / Extraction</p>
+                                                {videoMeta && <span className="text-[10px] font-black text-gray-500 font-mono">{videoMeta.width}x{videoMeta.height} / {videoMeta.duration.toFixed(2)}s</span>}
                                             </div>
+                                            <div className="flex bg-gray-200/50 p-1 rounded-full gap-1">
+                                                {QUICK_DURATION_PRESETS.map(v=>(
+                                                    <button key={v} onClick={()=>handleDurationChange(v)} disabled={isExtracting} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${!videoExtractSettings.useFullDuration && videoExtractSettings.durationSec===v?'bg-white text-gray-900':'text-gray-500 hover:text-gray-100'}`}>{v}S</button>
+                                                ))}
+                                                <button onClick={() => rerunVideoExtraction({ useFullDuration: true })} disabled={isExtracting} className={`flex-1 py-2 text-[10px] font-black rounded-full transition-all border-none ${videoExtractSettings.useFullDuration ? 'bg-white text-gray-900' : 'text-gray-500 hover:text-gray-100'}`}>FULL</button>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <label className="flex flex-col gap-1.5 text-left">
+                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">起始秒 / Start</span>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.1"
+                                                        value={videoExtractSettings.startSec}
+                                                        onChange={(e) => setVideoExtractSettings(prev => ({ ...prev, startSec: Math.max(0, Number(e.target.value) || 0) }))}
+                                                        className="bg-white border-none rounded-[16px] h-11 px-4 text-[13px] font-black text-gray-900 outline-none"
+                                                    />
+                                                </label>
+                                                <label className="flex flex-col gap-1.5 text-left">
+                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">时长秒 / Duration</span>
+                                                    <input
+                                                        type="number"
+                                                        min="0.1"
+                                                        step="0.1"
+                                                        disabled={videoExtractSettings.useFullDuration}
+                                                        value={videoExtractSettings.useFullDuration ? '' : videoExtractSettings.durationSec}
+                                                        placeholder={videoExtractSettings.useFullDuration ? 'FULL' : '5.0'}
+                                                        onChange={(e) => setVideoExtractSettings(prev => ({ ...prev, durationSec: Math.max(0.1, Number(e.target.value) || 0.1), useFullDuration: false }))}
+                                                        className="bg-white border-none rounded-[16px] h-11 px-4 text-[13px] font-black text-gray-900 outline-none disabled:opacity-40"
+                                                    />
+                                                </label>
+                                            </div>
+                                            <Slider label="提取采样 / Extract FPS" value={videoExtractSettings.fps} min={1} max={30} onChange={v=>setVideoExtractSettings({...videoExtractSettings, fps:v})} suffix="FPS" />
+                                            {extractionPreview && (
+                                                <div className="bg-white rounded-[18px] px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest leading-relaxed">
+                                                    <div>Start {extractionPreview.startSec.toFixed(1)}s</div>
+                                                    <div>Duration {extractionPreview.durationSec.toFixed(2)}s</div>
+                                                    <div>{extractionPreview.frameCount} Frames @ {extractionPreview.extractionFps} FPS</div>
+                                                </div>
+                                            )}
+                                            <button onClick={() => rerunVideoExtraction()} disabled={isExtracting} className="w-full py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all border-none bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-40">按当前设置重新提取</button>
                                         </div>
                                     )}
+                                    <div className="pt-2 flex flex-col gap-3 shrink-0 border-t border-gray-200/50 text-left">
+                                        <div className="flex justify-between items-center">
+                                            <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">透明裁边 / Trim</p>
+                                            <button onClick={() => setTrimSettings(prev => ({ ...prev, enabled: !prev.enabled }))} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border-none transition-all ${trimSettings.enabled ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}>{trimSettings.enabled ? 'ON' : 'OFF'}</button>
+                                        </div>
+                                        {trimSettings.enabled && (
+                                            <>
+                                                <Slider label="裁边留白 / Trim Padding" value={trimSettings.padding} min={0} max={24} onChange={v=>setTrimSettings({...trimSettings, padding:v})} suffix="PX" />
+                                                <Slider label="透明阈值 / Alpha Gate" value={trimSettings.alphaThreshold} min={0} max={64} onChange={v=>setTrimSettings({...trimSettings, alphaThreshold:v})} />
+                                            </>
+                                        )}
+                                    </div>
+                                    <div className="pt-2 flex flex-col gap-3 shrink-0 border-t border-gray-200/50 text-left">
+                                        <div className="flex justify-between items-center">
+                                            <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">帧去重 / Dedupe</p>
+                                            <button onClick={() => setDedupeSettings(prev => ({ ...prev, enabled: !prev.enabled }))} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border-none transition-all ${dedupeSettings.enabled ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}>{dedupeSettings.enabled ? 'ON' : 'OFF'}</button>
+                                        </div>
+                                        {dedupeSettings.enabled ? (
+                                            <>
+                                                <Slider label="差异阈值 / Threshold" value={dedupeSettings.threshold} min={0} max={64} onChange={v=>setDedupeSettings({...dedupeSettings, threshold:v})} />
+                                                <Slider label="采样网格 / Sample Grid" value={dedupeSettings.sampleSize} min={8} max={48} onChange={v=>setDedupeSettings({...dedupeSettings, sampleSize:v})} suffix="PX" />
+                                                <div className="bg-white rounded-[18px] px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest leading-relaxed">
+                                                    <div>Export-time Similar Frame Removal</div>
+                                                    <div>Lower Threshold = Stricter Dedupe</div>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="bg-white rounded-[18px] px-4 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest leading-relaxed">
+                                                Keep all frames during export.
+                                            </div>
+                                        )}
+                                    </div>
                                     <div className="pt-2 flex flex-col gap-3 border-t-0 text-left shrink-0">
                                         <div className="flex justify-between items-center"><p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">透明抠图 / Transparency</p>{transparentColor && <button onClick={()=>setTransparentColor(null)} className="text-[10px] font-black text-red-500 uppercase hover:underline border-none">清除</button>}</div>
                                         <button onClick={()=>setIsPickingColor(!isPickingColor)} className={`w-full py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border-none ${shouldShakePickBtn?'animate-shake bg-red-400 text-white':(isPickingColor?'bg-gray-900 text-white':'bg-white text-gray-700 hover:bg-gray-50')}`}><Icons.Pipette size={14}/>{isPickingColor?'请在中间画板取色':'吸取背景色'}</button>
@@ -775,7 +1435,7 @@
                                         <div className={`w-1.5 h-1.5 rounded-full ${images.length===0?'bg-gray-200':(isPickingColor?'bg-yellow-400 animate-pulse':'bg-red-500 animate-fast-blink')}`} />
                                         <span className="text-[11px] text-gray-400 font-black uppercase tracking-[0.2em] leading-none mt-0.5">显示输出 / Live Output</span>
                                     </div>
-                                    {importSource === 'spritesheet' && <span className="ml-4 text-[9px] bg-gray-900 text-white px-2 py-0.5 rounded-full font-black uppercase">导出格式锁：无损 GIF</span>}
+                                    <span className="ml-4 text-[9px] bg-gray-900 text-white px-2 py-0.5 rounded-full font-black uppercase">导出模式：{exportMode === 'gif' ? 'GIF' : (exportMode === 'sheet-webp' ? 'WEBP SHEET' : 'PNG SHEET')}</span>
                                 </div>
                                 <div className="flex-1 checkered-bg overflow-auto p-8 flex items-center justify-center relative">
                                     {isExtracting && <div className="absolute inset-0 bg-white/70 backdrop-blur-md flex flex-col items-center justify-center z-50"><div className="w-8 h-8 border-[3px] border-gray-100 border-t-gray-900 rounded-full animate-spin mb-4" /><p className="text-[11px] font-black tracking-widest text-gray-900 uppercase animate-pulse">处理中...</p></div>}
