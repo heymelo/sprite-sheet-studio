@@ -790,6 +790,38 @@
                 });
             };
 
+            const getRequestedSequenceFormatForMode = (mode = exportMode) => (
+                mode === 'sheet-webp' ? 'webp' : 'png'
+            );
+
+            const getRasterExportResult = (blob, requestedExtension = 'png') => {
+                const actualMime = blob?.type || '';
+                const actualExtension = actualMime === 'image/webp'
+                    ? 'webp'
+                    : (actualMime === 'image/png' ? 'png' : requestedExtension);
+                const fellBackToPng = requestedExtension === 'webp' && actualExtension === 'png';
+
+                return {
+                    actualMime,
+                    actualExtension,
+                    fellBackToPng
+                };
+            };
+
+            const getSheetExportLabelByExtension = (extension) => {
+                if (extension === 'gif') return 'GIF';
+                return extension === 'webp' ? 'WebP Sheet' : 'PNG Sheet';
+            };
+
+            const getFrameSequenceLabelByExtension = (extension) => (
+                extension === 'webp' ? 'WebP 帧序列' : 'PNG 帧序列'
+            );
+
+            const getSheetExportModeForFormat = (format, requestedMode = exportMode) => {
+                if (requestedMode === 'gif' || format === 'gif') return 'gif';
+                return format === 'webp' ? 'sheet-webp' : 'sheet-png';
+            };
+
             const generateSheetExport = async (mode = exportMode) => {
                 const layout = buildFrameLayoutFor(images, true);
                 if (mode === 'gif') {
@@ -804,19 +836,23 @@
 
                 const isWebP = mode === 'sheet-webp';
                 const mime = isWebP ? 'image/webp' : 'image/png';
-                const extension = isWebP ? 'webp' : 'png';
+                const requestedExtension = isWebP ? 'webp' : 'png';
                 const canvas = createSheetCanvas(layout);
                 const blob = await canvasToBlobAsync(
                     canvas,
                     mime,
                     isWebP ? clamp(webpQuality / 100, 0.1, 1) : undefined
                 );
+                const rasterResult = getRasterExportResult(blob, requestedExtension);
 
                 return {
                     blob,
                     layout,
-                    extension,
-                    filename: `${getExportBaseName()}_sheet.${extension}`
+                    requestedExtension,
+                    extension: rasterResult.actualExtension,
+                    actualMime: rasterResult.actualMime,
+                    fellBackToPng: rasterResult.fellBackToPng,
+                    filename: `${getExportBaseName()}_sheet.${rasterResult.actualExtension}`
                 };
             };
 
@@ -961,17 +997,14 @@
                 return () => clearInterval(itv);
             }, [images.length, settings.fps, isPlaying]);
 
-            const getSequenceExportFormatForMode = (mode = exportMode) => (
-                mode === 'sheet-webp' ? 'webp' : 'png'
-            );
-
             const generateFrameSequenceExport = async (format = 'png') => {
                 const isWebP = format === 'webp';
                 const mime = isWebP ? 'image/webp' : 'image/png';
-                const ext = isWebP ? 'webp' : 'png';
+                const requestedExtension = isWebP ? 'webp' : 'png';
                 const layout = buildFrameLayoutFor(images, true);
                 const baseName = getExportBaseName();
                 const files = [];
+                const extensionsUsed = new Set();
 
                 for (let index = 0; index < layout.frames.length; index++) {
                     const frame = layout.frames[index];
@@ -989,19 +1022,28 @@
                         mime,
                         isWebP ? clamp(webpQuality / 100, 0.1, 1) : undefined
                     );
+                    const rasterResult = getRasterExportResult(blob, requestedExtension);
+                    extensionsUsed.add(rasterResult.actualExtension);
 
                     files.push({
                         index,
                         frame,
                         blob,
-                        filename: `${baseName}_frame_${String(index).padStart(3, '0')}.${ext}`
+                        filename: `${baseName}_frame_${String(index).padStart(3, '0')}.${rasterResult.actualExtension}`
                     });
                 }
+
+                const actualExtension = extensionsUsed.size === 1
+                    ? Array.from(extensionsUsed)[0]
+                    : requestedExtension;
 
                 return {
                     layout,
                     files,
-                    extension: ext
+                    requestedExtension,
+                    extension: actualExtension,
+                    extensionsUsed: Array.from(extensionsUsed),
+                    fellBackToPng: requestedExtension === 'webp' && extensionsUsed.has('png')
                 };
             };
 
@@ -1009,7 +1051,7 @@
                 if (images.length === 0 || isExtracting) return;
                 const exportLabel = exportMode === 'gif'
                     ? 'GIF'
-                    : (exportMode === 'sheet-webp' ? 'WebP Sheet' : 'PNG Sheet');
+                    : getSheetExportLabelByExtension(exportMode === 'sheet-webp' ? 'webp' : 'png');
 
                 setIsExtracting(true);
                 showToast(`⏳ 导出 ${exportLabel} 中...`);
@@ -1017,7 +1059,11 @@
                 try {
                     const result = await generateSheetExport(exportMode);
                     exportBlobDownload(result.blob, result.filename);
-                    showToast(`✅ ${exportLabel} 导出成功！`);
+                    showToast(
+                        result.fellBackToPng
+                            ? "⚠️ 当前浏览器未真正导出 WebP，已自动回退为 PNG Sheet"
+                            : `✅ ${getSheetExportLabelByExtension(result.extension)} 导出成功！`
+                    );
                 } catch (error) {
                     console.error(error);
                     showToast(`❌ ${exportLabel} 导出失败，请重试`);
@@ -1041,7 +1087,11 @@
                         await new Promise(resolve => setTimeout(resolve, 50));
                     }
 
-                    showToast(isWebP ? "✅ WebP 帧序列导出完成！" : "✅ PNG 帧序列导出完成！");
+                    showToast(
+                        sequenceExport.fellBackToPng
+                            ? "⚠️ 当前浏览器未真正导出 WebP 帧，已自动回退为 PNG"
+                            : `✅ ${getFrameSequenceLabelByExtension(sequenceExport.extension)}导出完成！`
+                    );
                 } catch (error) {
                     console.error(error);
                     showToast("❌ 批量导出帧失败，请重试");
@@ -1064,9 +1114,16 @@
                     const baseName = getExportBaseName();
                     const zip = new window.JSZip();
                     const sheetExport = await generateSheetExport(exportMode);
-                    const sequenceFormat = getSequenceExportFormatForMode(exportMode);
+                    const sequenceFormat = getRequestedSequenceFormatForMode(exportMode);
                     const sequenceExport = await generateFrameSequenceExport(sequenceFormat);
-                    const metadata = buildExportMetadata(sheetExport.layout);
+                    const metadata = buildExportMetadata(sheetExport.layout, {
+                        requestedExportMode: exportMode,
+                        sheetFormat: sheetExport.extension,
+                        sequenceFormat: sequenceExport.extension,
+                        sheetFallbackToPng: sheetExport.fellBackToPng,
+                        sequenceFallbackToPng: sequenceExport.fellBackToPng,
+                        mixedSequenceExtensions: sequenceExport.extensionsUsed.length > 1
+                    });
 
                     zip.file(sheetExport.filename, sheetExport.blob);
                     zip.file(`${baseName}_metadata.json`, JSON.stringify(metadata, null, 2));
@@ -1081,7 +1138,11 @@
                     });
 
                     exportBlobDownload(zipBlob, `${baseName}_bundle.zip`);
-                    showToast("✅ ZIP 打包导出成功！");
+                    showToast(
+                        (sheetExport.fellBackToPng || sequenceExport.fellBackToPng)
+                            ? "⚠️ 当前浏览器未真正导出 WebP，ZIP 内已自动回退为 PNG"
+                            : "✅ ZIP 打包导出成功！"
+                    );
                 } catch (error) {
                     console.error(error);
                     showToast("❌ ZIP 打包失败，请重试");
@@ -1090,11 +1151,19 @@
                 }
             };
 
-            const buildExportMetadata = (layoutOverride = null) => {
+            const buildExportMetadata = (layoutOverride = null, exportInfo = {}) => {
                 const layout = layoutOverride || buildFrameLayoutFor(images, true);
                 const validImages = layout.frames;
                 const sourceFrameCount = images.filter(i => i && i.img).length;
                 const removedFrameCount = Math.max(0, sourceFrameCount - validImages.length);
+                const requestedExportMode = exportInfo.requestedExportMode || exportMode;
+                const sheetFormat = exportInfo.sheetFormat || (
+                    requestedExportMode === 'gif'
+                        ? 'gif'
+                        : (requestedExportMode === 'sheet-webp' ? 'webp' : 'png')
+                );
+                const sequenceFormat = exportInfo.sequenceFormat || getRequestedSequenceFormatForMode(requestedExportMode);
+                const actualExportMode = getSheetExportModeForFormat(sheetFormat, requestedExportMode);
 
                 return {
                     generatedAt: new Date().toISOString(),
@@ -1102,7 +1171,9 @@
                     sourceFrameCount,
                     frameCount: validImages.length,
                     removedFrameCount,
-                    exportMode,
+                    requestedExportMode,
+                    exportMode: actualExportMode,
+                    sheetFormat,
                     maxFrameWidth: layout.cellWidth,
                     maxFrameHeight: layout.cellHeight,
                     columns: layout.columns,
@@ -1124,8 +1195,13 @@
                         removedFrames: removedFrameCount
                     },
                     exportSizing,
-                    webpQuality: exportMode === 'sheet-webp' ? webpQuality : null,
-                    sequenceFormat: getSequenceExportFormatForMode(exportMode),
+                    webpQuality: (sheetFormat === 'webp' || sequenceFormat === 'webp') ? webpQuality : null,
+                    sequenceFormat,
+                    formatWarnings: {
+                        sheetFallbackToPng: Boolean(exportInfo.sheetFallbackToPng),
+                        sequenceFallbackToPng: Boolean(exportInfo.sequenceFallbackToPng),
+                        mixedSequenceExtensions: Boolean(exportInfo.mixedSequenceExtensions)
+                    },
                     colorAdjustments: {
                         saturation: settings.saturation,
                         hue: settings.hue
